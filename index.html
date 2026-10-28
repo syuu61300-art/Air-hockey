@@ -279,6 +279,7 @@ canvas{display:block}
 @keyframes a-tune{0%{opacity:0;transform:translateY(-14px) scaleY(.6);transform-origin:top}60%{opacity:1}100%{opacity:1;transform:none}}
 body.gfx-lo .ui-bg{-webkit-backdrop-filter:none;backdrop-filter:none;background:linear-gradient(90deg,rgba(7,9,12,.88),rgba(7,9,12,.66) 60%,rgba(7,9,12,.5))}
 body.gfx-lo .ui-bg::after,body.gfx-lo .mym .disc::before{animation:none}
+body.gfx-lo .num{text-shadow:none} body.gfx-lo .banner{text-shadow:none!important}
 
 /* ---- 画面ごとに違う登場アニメーション ---- */
 .scr.in .st{animation-duration:.6s;animation-fill-mode:backwards;animation-timing-function:cubic-bezier(.2,.9,.25,1);animation-delay:calc(var(--i,0) * 65ms + 60ms)}
@@ -551,8 +552,8 @@ let diff='normal', sfxVol=.8, musVol=.7, gfx='hi', method='auto';
 /* グラフィック設定：高（標準）・中・低。描画解像度・後処理・影・粒子の量をそれぞれ決める */
 const GFX={
   hi:{pr3:1.5,post:true,bloom:true,bokeh:true,shadow:2,spark:1,conf:1,dust:true,cv2:2,cineDpr:2,spark2:1,trail:true,ovl:true},
-  mid:{pr3:1,post:true,bloom:true,bokeh:false,shadow:1,spark:.55,conf:.6,dust:true,cv2:1.5,cineDpr:1.5,spark2:.7,trail:true,ovl:true},
-  lo:{pr3:.75,post:false,bloom:false,bokeh:false,shadow:0,spark:.3,conf:.35,dust:false,cv2:1,cineDpr:1,spark2:.4,trail:false,ovl:false}};
+  mid:{pr3:1,post:true,bloom:true,bokeh:false,shadow:1,spark:.55,conf:.6,dust:true,cv2:2,cineDpr:1.5,spark2:.7,trail:true,ovl:true,simple:true},
+  lo:{pr3:.75,post:false,bloom:false,bokeh:false,shadow:0,spark:.3,conf:.35,dust:false,cv2:1.5,cineDpr:1,spark2:0,trail:false,ovl:false,flat:true}};
 try{const s=JSON.parse(localStorage.getItem('ah-prefs')||'{}');if(DIFF_K[s.diff]!==undefined)diff=s.diff;const v01=v=>Math.min(1,Math.max(0,v));
   if(typeof s.sfxVol==='number')sfxVol=v01(s.sfxVol);else if(s.sound===false){sfxVol=0;musVol=0}
   if(typeof s.musVol==='number')musVol=v01(s.musVol);else if(s.music===false)musVol=0;
@@ -729,10 +730,10 @@ function physics(dt,demo){
   if(d>md){dx*=md/d;dy*=md/d}
   if(state==='cine'&&!demo){dx=0;dy=0}
   let sx=you.x, sy=you.y;
-  you.vx=dx/dt; you.vy=dy/dt;
+  you.vx=dx/dt; you.vy=dy/dt; physT=performance.now(); {const kv=1-Math.exp(-dt*25);youVs.x+=(you.vx-youVs.x)*kv;youVs.y+=(you.vy-youVs.y)*kv}
   let tsx=cpu.x,tsy=cpu.y,tdx=0,tdy=0;
   if(online){
-    const T=drPos(NET.oppPeer,NET.role==='g');
+    const T=remoteMallet(NET.oppPeer,NET.role==='g');
     if(T){const c=clampMallet(T[0],T[1],true);tdx=c[0]-cpu.x;tdy=c[1]-cpu.y;
       if(Math.hypot(tdx,tdy)>.35){cpu.x=c[0];cpu.y=c[1];tsx=c[0];tsy=c[1];tdx=tdy=0}}
     cpu.vx=clamp(tdx/dt,-9,9); cpu.vy=clamp(tdy/dt,-9,9);
@@ -973,7 +974,8 @@ function startBT(by,k,pred,d){
   bt.sub=by==='you'?(pred==='own'?'自分のゴールに向かっている！':'まだ止められる。相手も動ける'):'相手のスーパーショット！ マレットで止めろ';
   // 練習の CPU は難しさに応じて一度だけ「止めに行くか」を決め、反応にも少し時間がかかる
   if(NET.mode!=='online'&&by==='you'){bt.cpuTry=Math.random()<clamp(AIP.block*.7,.12,.7);bt.cpuWait=.3+Math.random()*.35*(1.2-AIP.k);bt.aim=btAim(d)} else bt.cpuTry=false;
-  superTrail={pts:d.path.filter(p=>p[0]<=d.tcut),live:bt.live,age:0,in:0};
+  {const P=d.path.filter(p=>p[0]<=d.tcut);let acc=0,i=P.length-1;for(;i>0;i--){acc+=Math.hypot(P[i][1]-P[i-1][1],P[i][2]-P[i-1][2]);if(acc>.7)break} // 直前の約0.7だけ残す（全部描くと台がジグザグで埋まる）
+   superTrail={pts:P.slice(Math.max(0,i-1)),live:bt.live,age:0,in:0}}
 }
 const BT_SND={goal2:'goal',own:'own',block:'block',post:'post',post2:'post',wide:'wide',safe:'wide',save:'save',stop:'save',conc2:'conc',gift:'own'};
 function btTitle(kind){
@@ -1043,7 +1045,7 @@ function drawOverlay(dt){
     const tt=bt.t, inK=clamp(tt/.25,0,1), move=e_(clamp((tt-.5)/.35,0,1)), big=Math.min(cw*.17,ch*.085);
     const y=bt.up?ch*(.6+.02*move):ch*(.15-.03*move), // 球が向かうゴールの反対側に出して、勝負どころを隠さない
       size=big*(1-.25*move)*(1+.7*(1-inK)**2), sh=(1-move)*Math.exp(-tt*5)*5; // 台の真ん中（球の通り道）は隠さない
-    g.save(); g.translate(cw/2+(Math.random()-.5)*sh,y); g.rotate(-.05*(1-move));
+    g.save(); g.globalAlpha=1-.55*clamp((tt-1)/.4,0,1); g.translate(cw/2+(Math.random()-.5)*sh,y); g.rotate(-.05*(1-move));
     const col=bt.by==='you'?(bt.pred==='own'?['#eafff4','#3fbf86','#f4c534']:['#fff6dc','#ee4631','#f4c534']):['#e6f0ff','#3a7ff0','#ee4631'];
     const sz=cineTitle(g,bt.msg,0,0,size*(1+.04*Math.exp(-(((tt-.15)%.62+.62)%.62)*7)),inK,cw*.86,col[0],col[1],col[2],'"Dela Gothic One","Zen Kaku Gothic New",sans-serif',400,size*.1);
     const f1=Math.max(13,sz*.17), f2=Math.max(12,sz*.14), y1=sz*.66, y2=y1+f1*1.35; g.textAlign='center'; g.textBaseline='middle'; g.lineJoin='round'; g.globalAlpha=inK*(1-.35*move);
@@ -1992,10 +1994,19 @@ const bgm=(()=>{
 let dpr=1,cw=1,ch=1,S=1,ox=0,oy=0,rect=null;
 const st=document.createElement('canvas'); const SP={};
 function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function buildFlat(g){ // 低：単色だけの軽い盤面（グラデーション・影・穴の模様なし）
+  rr(g,-RAIL,-RAIL,W+2*RAIL,L+2*RAIL,CR+RAIL*.8);g.fillStyle='#262b33';g.fill();
+  g.fillStyle='#07080a';for(const top of [true,false]){const y0=top?-RAIL+.016:L;g.fillRect(W/2-G/2,y0,G,RAIL-.016)}
+  rr(g,0,0,W,L,CR);g.fillStyle='#e7ecf0';g.fill();
+  g.save();rr(g,0,0,W,L,CR);g.clip();g.fillStyle='#d8392b';g.fillRect(0,L/2-.004,W,.008);
+  g.lineWidth=.006;g.strokeStyle='#d8392b';g.beginPath();g.arc(W/2,L/2,.15,0,6.2832);g.stroke();
+  g.strokeStyle='#2f6fd8';g.beginPath();g.arc(W/2,0,.24,0,Math.PI);g.stroke();g.beginPath();g.arc(W/2,L,.24,Math.PI,0);g.stroke();g.restore();
+}
 function buildStatic(){
   st.width=cv.width; st.height=cv.height;
   const g=st.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.translate(ox,oy); g.scale(S,S);
-  g.save();g.shadowColor='rgba(0,0,0,.6)';g.shadowBlur=36*dpr;g.shadowOffsetY=16*dpr;
+  if(GQ.flat){buildFlat(g);return}
+  g.save();if(!GQ.simple){g.shadowColor='rgba(0,0,0,.6)';g.shadowBlur=36*dpr;g.shadowOffsetY=16*dpr}
   rr(g,-RAIL,-RAIL,W+2*RAIL,L+2*RAIL,CR+RAIL*.8);g.fillStyle='#1a1e24';g.fill();g.restore();
   let gr=g.createLinearGradient(-RAIL,0,W+RAIL,0);
   gr.addColorStop(0,'#323944');gr.addColorStop(.08,'#232830');gr.addColorStop(.5,'#1d2128');gr.addColorStop(.92,'#232830');gr.addColorStop(1,'#323944');
@@ -2023,11 +2034,11 @@ function buildStatic(){
   g.lineWidth=.005;g.setLineDash([.012,.01]);g.strokeStyle='#d8392b';
   for(const yy of [L*.27,L*.73]){g.beginPath();g.arc(W/2,yy,.055,0,6.2832);g.stroke()}
   g.setLineDash([]);g.globalAlpha=1;
-  g.save();g.shadowColor='rgba(15,28,48,.4)';g.shadowBlur=12*dpr;g.lineWidth=.04;g.strokeStyle='#000';rr(g,-.02,-.02,W+.04,L+.04,CR+.02);g.stroke();g.restore();
-  const gl=g.createLinearGradient(0,L*.05,W,L*.55);gl.addColorStop(0,'rgba(255,255,255,0)');gl.addColorStop(.44,'rgba(255,255,255,0)');gl.addColorStop(.52,'rgba(255,255,255,.28)');gl.addColorStop(.62,'rgba(255,255,255,0)');
+  if(!GQ.simple){g.save();g.shadowColor='rgba(15,28,48,.4)';g.shadowBlur=12*dpr;g.lineWidth=.04;g.strokeStyle='#000';rr(g,-.02,-.02,W+.04,L+.04,CR+.02);g.stroke();g.restore()}
+  if(!GQ.simple){const gl=g.createLinearGradient(0,L*.05,W,L*.55);gl.addColorStop(0,'rgba(255,255,255,0)');gl.addColorStop(.44,'rgba(255,255,255,0)');gl.addColorStop(.52,'rgba(255,255,255,.28)');gl.addColorStop(.62,'rgba(255,255,255,0)');
   g.fillStyle=gl;g.fillRect(0,0,W,L);
   const vg=g.createRadialGradient(W/2,L/2,L*.15,W/2,L/2,L*.72);vg.addColorStop(0,'rgba(20,40,70,0)');vg.addColorStop(1,'rgba(20,40,70,.14)');
-  g.fillStyle=vg;g.fillRect(0,0,W,L);
+  g.fillStyle=vg;g.fillRect(0,0,W,L)}
   g.restore();
   g.fillStyle='#b9c2cc';for(const py of [0,L])for(const px of [W/2-G/2,W/2+G/2]){g.beginPath();g.arc(px,py,.007,0,6.2832);g.fill()}
 }
@@ -2089,9 +2100,10 @@ function drawMalletSkin(g,r,sk){
   if(gl>.3){g.fillStyle=`rgba(255,255,255,${(gl-.3)*.28})`;g.beginPath();g.ellipse(-r*.36,-r*.46,r*.4,r*.16,-.6,0,6.2832);g.fill()}
 }
 const skinCache=new Map();
+function flatMallet(g,r,body,knob){g.fillStyle=body;circ(g,0,0,r);g.fill();g.fillStyle=knob;circ(g,0,0,r*.45);g.fill()}
 function skinSprite(sk){
-  const sig=skinArr(sk).join('|'); let s=skinCache.get(sig);
-  if(!s){s=mk(MR,(g,r)=>drawMalletSkin(g,r,sk));skinCache.set(sig,s);if(skinCache.size>10)skinCache.delete(skinCache.keys().next().value)}
+  const sig=skinArr(sk).join('|')+(GQ.flat?'|f':''); let s=skinCache.get(sig);
+  if(!s){s=mk(MR,(g,r)=>GQ.flat?flatMallet(g,r,sk.pat==='neon'||sk.pat==='carbon'?'#23272e':sk.body,sk.pat==='neon'||sk.pat==='carbon'?sk.body:shade(sk.knob,-.25)):drawMalletSkin(g,r,sk));skinCache.set(sig,s);if(skinCache.size>10)skinCache.delete(skinCache.keys().next().value)}
   return s;
 }
 function peerSkin(r){if(!r||!r.s||!Array.isArray(r.s.sk))return null;if(r.skQ!==r.q){r.skQ=r.q;r.skin=skinFromArr(r.s.sk)}return r.skin}
@@ -2099,16 +2111,18 @@ function topSprite(){if(NET.mode==='online'&&inMatch()){const sk=peerSkin(NET.is
 function bottomSprite(){if(NET.mode==='online'&&inMatch()&&!NET.isPlayer){const sk=peerSkin(NET.hostPeer);return sk?skinSprite(sk):SP.you}return skinSprite(skin)}
 function buildSprites(){
   skinCache.clear();
-  SP.puck=mk(PR,drawPuck);
+  if(GQ.flat){SP.puck=mk(PR,(g,r)=>{g.fillStyle='#1b1f25';circ(g,0,0,r);g.fill();g.lineWidth=r*.16;g.strokeStyle=COL.gold;circ(g,0,0,r*.6);g.stroke()});
+    SP.you=mk(MR,(g,r)=>flatMallet(g,r,COL.red,COL.redD));SP.cpu=mk(MR,(g,r)=>flatMallet(g,r,COL.blue,COL.blueD))}
+  else{SP.puck=mk(PR,drawPuck);
   SP.you=mk(MR,(g,r)=>drawMallet(g,r,COL.red,COL.redD,COL.redL));
-  SP.cpu=mk(MR,(g,r)=>drawMallet(g,r,COL.blue,COL.blueD,COL.blueL));
+  SP.cpu=mk(MR,(g,r)=>drawMallet(g,r,COL.blue,COL.blueD,COL.blueL))}
   SP.shP=mk(PR,drawShadow); SP.shM=mk(MR,drawShadow);
 }
 const spr=(s,x,y)=>ctx.drawImage(s.c,x-s.h,y-s.h,s.h*2,s.h*2);
 function goalLight(y,dir,amt,strip,glow){
   const yb=dir<0?-RAIL+.022:L+RAIL-.022;
   ctx.globalAlpha=.35+.65*amt;ctx.fillStyle=amt>.02?glow:strip;ctx.fillRect(W/2-G/2+.014,yb-.004,G-.028,.008);ctx.globalAlpha=1;
-  if(amt>.02){
+  if(amt>.02&&!GQ.flat){
     ctx.globalCompositeOperation='lighter';
     const g=ctx.createRadialGradient(W/2,y,0,W/2,y,.5);g.addColorStop(0,hexA(glow,.5*amt));g.addColorStop(1,hexA(glow,0));
     ctx.fillStyle=g;ctx.fillRect(W/2-.5,y-.5,1,1);ctx.globalCompositeOperation='source-over';
@@ -2126,12 +2140,12 @@ function render(dt,now){
   goalLight(L,1,flash.bottom*blink,COL.red,COL.blue);
   const hidden=NET.mode==='online'&&NET.hidden&&state!=='menu';
   const ps=hidden?0:state==='goal'?Math.max(0,1-fall*2.4):1;
-  if(ps>0&&puck.y>0&&puck.y<L) spr(SP.shP,puck.x+.005,puck.y+.01);
-  spr(SP.shM,cpu.x+.013,cpu.y+.022); spr(SP.shM,you.x+.013,you.y+.022);
+  if(!GQ.flat){if(ps>0&&puck.y>0&&puck.y<L) spr(SP.shP,puck.x+.005,puck.y+.01);
+  spr(SP.shM,cpu.x+.013,cpu.y+.022); spr(SP.shM,you.x+.013,you.y+.022)}
   if((state==='play'||state==='menu')&&!hidden){trail.push(puck.x,puck.y);if(trail.length>20)trail.splice(0,2)} else trail.length=0;
-  if(superTrail){if(!bt.on)superTrail.age+=dt;superTrail.in+=dt;const age=superTrail.age;if(age>1.8||state==='menu')superTrail=null;else{const a=Math.min(1,superTrail.in/.2)*(1-Math.max(0,(age-.3)/1.5));
+  if(superTrail){if(!bt.on)superTrail.age+=dt;superTrail.in+=dt;const age=superTrail.age;if(age>.9||state==='menu')superTrail=null;else{const a=Math.min(1,superTrail.in/.2)*(1-Math.max(0,(age-.15)/.75));
     ctx.lineCap='round';ctx.lineJoin='round';const seg=(P,o)=>{for(let i=o;i<P.length;i++)ctx.lineTo(P[i][1],clamp(P[i][2],-PR,L+PR))};
-    for(const [w,al,c] of [[PR*2.2,.16,'#f4c534'],[PR*1.05,.42,'#ffd860'],[PR*.32,.95,'#fff6dc']]){ctx.globalAlpha=al*a;ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();
+    for(const [w,al,c] of GQ.flat?[[PR*.5,.85,'#f4c534']]:[[PR*2.2,.16,'#f4c534'],[PR*1.05,.42,'#ffd860'],[PR*.32,.95,'#fff6dc']]){ctx.globalAlpha=al*a;ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();
       const P=superTrail.pts;if(P.length){ctx.moveTo(P[0][1],P[0][2]);seg(P,1)}else ctx.moveTo(superTrail.live[0][1],superTrail.live[0][2]);if(superTrail.live)seg(superTrail.live,0);ctx.stroke()}
     ctx.globalAlpha=1}}
   if(bt.on&&ps>0&&state==='play'){ // 進む向きのガイド（壁で1回跳ね返る）
@@ -2139,7 +2153,7 @@ function render(dt,now){
     ctx.save();ctx.setLineDash([.02,.016]);ctx.lineDashOffset=-bt.t*.08;ctx.lineWidth=.007;ctx.lineCap='round';ctx.strokeStyle='rgba(255,214,90,.85)';ctx.beginPath();ctx.moveTo(x,y);
     for(let b=0;b<3&&rem>1e-4;b++){let tw=Infinity;if(vx>1e-6)tw=(W-PR-x)/vx;else if(vx<-1e-6)tw=(PR-x)/vx;const st=Math.max(0,Math.min(rem,tw));x+=vx*st;y+=vy*st;ctx.lineTo(x,y);rem-=st;if(st===tw)vx=-vx;else break}
     ctx.stroke();ctx.restore()}
-  if(bt.on&&ps>0){const pu=.5+.5*Math.exp(-(((bt.t-.15)%.62+.62)%.62)*7),rg=ctx.createRadialGradient(puck.x,puck.y,PR*.6,puck.x,puck.y,PR*(3.2+1.2*pu));rg.addColorStop(0,`rgba(255,226,120,${.55*pu})`);rg.addColorStop(1,'rgba(255,226,120,0)');ctx.fillStyle=rg;ctx.beginPath();ctx.arc(puck.x,puck.y,PR*(3.2+1.2*pu),0,6.2832);ctx.fill()}
+  if(bt.on&&ps>0&&!GQ.flat){const pu=.5+.5*Math.exp(-(((bt.t-.15)%.62+.62)%.62)*7),rg=ctx.createRadialGradient(puck.x,puck.y,PR*.6,puck.x,puck.y,PR*(3.2+1.2*pu));rg.addColorStop(0,`rgba(255,226,120,${.55*pu})`);rg.addColorStop(1,'rgba(255,226,120,0)');ctx.fillStyle=rg;ctx.beginPath();ctx.arc(puck.x,puck.y,PR*(3.2+1.2*pu),0,6.2832);ctx.fill()}
   const k=clamp((Math.hypot(puck.vx,puck.vy)-1.2)/3,0,1);
   if(GQ.trail&&k>0&&trail.length>=4){ctx.lineCap='round';ctx.strokeStyle='#2b3038';const n=trail.length/2;
     for(let i=1;i<n;i++){const f=i/n;ctx.globalAlpha=.22*f*k;ctx.lineWidth=2*PR*(.35+.6*f);ctx.beginPath();ctx.moveTo(trail[2*i-2],trail[2*i-1]);ctx.lineTo(trail[2*i],trail[2*i+1]);ctx.stroke()}
@@ -2226,7 +2240,7 @@ function keyMove(){
    自分のマレットが触れた瞬間にも計算役を引き取る。座標はホストの向きで送り、ゲストは180°回して使う。
    =================================================================== */
 const NET={api:null,apiP:null,apiTried:false,mode:'solo',role:null,id:'u'+Math.random().toString(36).slice(2,11),mesh:null,srv:null,
-  peers:new Map(),seq:0,pubT:0,rtt:0,curGid:-1,epoch:0,own:false,pOut:null,hc:0,lastOppHc:-1,conceded:0,oppC:0,err:[0,0],hidden:false,
+  peers:new Map(),mb:new Map(),arr:new Map(),seq:0,pubT:0,rtt:0,curGid:-1,epoch:0,own:false,pOut:null,hc:0,lastOppHc:-1,conceded:0,oppC:0,err:[0,0],hidden:false,
   overT:0,overFn:null,isPlayer:false,isPlayerNow:false,hostG:{gid:0,st:'wait',opp:null},hostPeer:null,oppPeer:null,specOpp:null,
   joinT:0,hostSeenT:0,status:{},lobbyMq:new Map(),mqLobby:false,busy:false,from:'online',specKey:'',specHc:{},specInit:false,uiT:0,capT:0,lastAnn:'',srvSig:''};
 
@@ -2317,12 +2331,12 @@ function poolStatus(){
   setStatus('relay',`${up.length}/${POOL.clients.length}か所に接続${f?`（最速 ${f.cfg.name} ${Math.round(f.rtt)}ms）`:''}`);
 }
 /* ---- 経路（メッシュ）：publish(状態) / states() = 他の人の最新状態 / close() ---- */
-function roomMesh(r){return{kind:'room',label:'CLAUDE.AI',
-  publish(s){r.presence({s}).catch(()=>{})},
+function roomMesh(r){let ls=0;return{kind:'room',label:'CLAUDE.AI',
+  publish(s){const n=performance.now();if(n-ls<15)return;ls=n;r.presence({s}).catch(()=>{})},
   states(){const out=[];let ps=[];try{ps=r.peers()}catch(e){}for(const p of ps){if(p.isMe&&p.sameTab)continue;const s=p.presence&&p.presence.s;if(s&&typeof s.id==='string')out.push(s)}return out},
   close(){try{r.leave().catch(()=>{})}catch(e){}}}}
-function tagMesh(api,code){return{kind:'room',label:'CLAUDE.AI',
-  publish(s){api.presence({gs:code,s}).catch(()=>{})},
+function tagMesh(api,code){let ls=0;return{kind:'room',label:'CLAUDE.AI',
+  publish(s){const n=performance.now();if(n-ls<15)return;ls=n;api.presence({gs:code,s}).catch(()=>{})},
   states(){const out=[];let ps=[];try{ps=api.peers()}catch(e){}for(const p of ps){if(p.isMe&&p.sameTab)continue;const pr=p.presence||{};if(pr.gs===code&&pr.s&&typeof pr.s.id==='string')out.push(pr.s)}return out},
   close(){api.presence({gs:null,s:null}).catch(()=>{})}}}
 function seenStates(seen){const now=performance.now(),out=[];seen.forEach((v,k)=>{if(now-v.at>5000)seen.delete(k);else out.push(v.s)});return out}
@@ -2331,7 +2345,7 @@ function relayMesh(code){
   const M={kind:'relay',label:'MQTT',
     publish(s){const now=performance.now();if(now-lastSend<33)return;lastSend=now;poolPub(topic,JSON.stringify(s),2)},
     states(){return seenStates(seen)}, close(){poolUnsub(topic)}};
-  poolSub(topic,tx=>{let m;try{m=JSON.parse(tx)}catch(e){return}if(!m||typeof m.id!=='string'||m.id===NET.id)return;const o=seen.get(m.id);if(o&&num(m.q)<=num(o.s.q))return;seen.set(m.id,{s:m,at:performance.now()})});
+  poolSub(topic,tx=>{let m;try{m=JSON.parse(tx)}catch(e){return}if(!m||typeof m.id!=='string'||m.id===NET.id)return;const o=seen.get(m.id);if(o&&num(m.q)<=num(o.s.q))return;seen.set(m.id,{s:m,at:performance.now()});netArrive(m)});
   return new Promise((res,rej)=>{const t0=performance.now();const chk=setInterval(()=>{if(poolUp()>0){clearInterval(chk);res(M)}else if(performance.now()-t0>12000){clearInterval(chk);poolUnsub(topic);rej(new Error('no broker'))}},200)});
 }
 let peerLibP=null;
@@ -2346,7 +2360,7 @@ async function peerMesh(code,host){
   return new Promise((res,rej)=>{
     const pid='linkah-'+code, pr=host?new Peer(pid,{debug:0}):new Peer({debug:0}), conns=new Set(), seen=new Map(); let done=false;
     const fail=setTimeout(()=>{if(!done){done=true;try{pr.destroy()}catch(e){}rej(new Error('timeout'))}},9000);
-    const onData=(c,d)=>{if(!d||typeof d.id!=='string'||d.id===NET.id)return;const o=seen.get(d.id);if(o&&num(d.q)<=num(o.s.q))return;seen.set(d.id,{s:d,at:performance.now()});
+    const onData=(c,d)=>{if(!d||typeof d.id!=='string'||d.id===NET.id)return;const o=seen.get(d.id);if(o&&num(d.q)<=num(o.s.q))return;seen.set(d.id,{s:d,at:performance.now()});netArrive(d);
       if(host)conns.forEach(x=>{if(x!==c&&x.open){try{x.send(d)}catch(e){}}})};
     const wire=c=>{conns.add(c);c.on('data',d=>onData(c,d));const gone=()=>conns.delete(c);c.on('close',gone);c.on('error',gone)};
     const M={kind:'peer',label:'PEERJS',publish(s){conns.forEach(c=>{if(c.open){try{c.send(s)}catch(e){}}})},states(){return seenStates(seen)},close(){try{pr.destroy()}catch(e){}}};
@@ -2570,12 +2584,39 @@ function applyErr(dt){
 }
 function specUpdate(dt){
   const k=1-Math.exp(-22*dt);
-  const A=drPos(NET.hostPeer,false); if(A){const c=clampMallet(A[0],A[1],false);you.x+=(c[0]-you.x)*k;you.y+=(c[1]-you.y)*k}
-  const B=drPos(NET.specOpp,false); if(B){const c=clampMallet(B[0],B[1],true);cpu.x+=(c[0]-cpu.x)*k;cpu.y+=(c[1]-cpu.y)*k}
+  const A=remoteMallet(NET.hostPeer,false); if(A){const c=clampMallet(A[0],A[1],false);you.x=c[0];you.y=c[1]}
+  const B=remoteMallet(NET.specOpp,false); if(B){const c=clampMallet(B[0],B[1],true);cpu.x=c[0];cpu.y=c[1]}
   if(state==='play'&&!NET.hidden){const n=Math.max(1,Math.ceil(dt*480));for(let i=0;i<n;i++)followStep(dt/n)}
   applyErr(dt);
 }
-/* 相手マレット：最後の報告位置＋速度×（経過時間＋片道遅延）＝いま実際にいるはずの位置 */
+/* 受信：届いた時刻と、相手マレットの位置の履歴（送り手の時計つき）を残す */
+function netArrive(d,at){
+  if(!d||typeof d.id!=='string'||d.id===NET.id) return; at=at||performance.now(); const q=num(d.q);
+  const a=NET.arr.get(d.id); if(!a||q>a.q) NET.arr.set(d.id,{q,at});
+  if(Array.isArray(d.m)&&Number.isFinite(+d.t)){let B=NET.mb.get(d.id);if(!B){B=[];NET.mb.set(d.id,B)}
+    const ts=+d.t, l=B[B.length-1]; if(!l||ts>l.ts){const x=num(d.m[0],NaN),y=num(d.m[1],NaN);if(Number.isFinite(x)&&Number.isFinite(y)){B.push({ts,at,x,y});if(B.length>28)B.shift()}}}
+}
+function bufAt(B,t){
+  const n=B.length; if(t<=B[0].ts) return [B[0].x,B[0].y];
+  if(t>=B[n-1].ts){const a=B[n-2],b=B[n-1],dt=Math.max(1,b.ts-a.ts),e=Math.min(t-b.ts,50);return [b.x+(b.x-a.x)/dt*e,b.y+(b.y-a.y)/dt*e]} // 届いていない分は直前の動きで少しだけ先読み
+  let lo=0,hi=n-1; while(hi-lo>1){const m=(lo+hi)>>1;if(B[m].ts<=t)lo=m;else hi=m}
+  const a=B[lo],b=B[hi],f=(t-a.ts)/Math.max(1e-6,b.ts-a.ts); return [a.x+(b.x-a.x)*f,a.y+(b.y-a.y)*f];
+}
+/* 相手マレット：送り手の時計で並べた位置を補間し（届く間隔の揺れを吸収）、遅れの分だけ滑らかに先読みする */
+function remoteMallet(r,flip){
+  if(!r) return null; const B=NET.mb.get(r.id); if(!B||B.length<3) return drPos(r,flip);
+  const now=performance.now(); if(now-B[B.length-1].at>400) return drPos(r,flip);
+  let off=Infinity; for(const b of B){const o=b.at-b.ts;if(o<off)off=o} // いちばん速く届いた便を基準に時計を合わせる
+  let js=0; for(const b of B) js+=b.at-b.ts-off; const jit=js/B.length, iv=(B[B.length-1].ts-B[0].ts)/(B.length-1);
+  const delay=Math.min(45,jit*1.5+iv*.5+1), tp=now-off-delay;
+  const P=bufAt(B,tp), Q=bufAt(B,tp-40), lead=Math.min(.07,(delay+(NET.rtt||50)/2)/1000)*.85;
+  let x=P[0]+clamp((P[0]-Q[0])/.04*lead,-.07,.07), y=P[1]+clamp((P[1]-Q[1])/.04*lead,-.07,.07);
+  if(flip){x=W-x;y=L-y}
+  const sm=r.sm||(r.sm={x,y,t:now}), k=1-Math.exp(-Math.max(0,now-sm.t)/10); sm.t=now; // 最後の細かい揺れだけ取る（約10ms）
+  if(Math.hypot(x-sm.x,y-sm.y)>.25){sm.x=x;sm.y=y}else{sm.x+=(x-sm.x)*k;sm.y+=(y-sm.y)*k}
+  return [sm.x,sm.y];
+}
+/* 古い版の相手向け：最後の報告位置＋速度×（経過時間＋片道遅延） */
 function drPos(r,flip){
   if(!r||!r.s||!Array.isArray(r.s.m)) return null;
   const m=r.s.m, age=Math.min(.15,(performance.now()-r.rx)/1000+(NET.rtt||80)/2000);
@@ -2598,7 +2639,7 @@ function handlePuck(o,now){
   const p=s.p, e=num(p[6],-1)|0, f=num(p[7])|0, hc=num(p[8])|0; if(e<0) return;
   btRecv(p,f);
   if((f&8)&&e>=NET.epoch) remoteCine(s,peerSkin(o),NET.role==='g');
-  const age=Math.min(.25,(now-o.rx)/1000+(NET.rtt||80)/2000);
+  const age=Math.min(.25,(now-o.rx+num(s.pa))/1000+(NET.rtt||80)/2000);
   if(e>NET.epoch){
     if(f&2){NET.epoch=e;NET.own=true;NET.pOut=null;NET.hidden=false;snapTo(p,age,true);NET.lastOppHc=hc;return} // 相手から受け取った
     if(f&1){NET.epoch=e;NET.own=false;NET.pOut=null;NET.hidden=!!(f&4);if(!NET.hidden)snapTo(p,age,true);if(hc>NET.lastOppHc&&NET.lastOppHc>=0)remoteHit();NET.lastOppHc=hc}
@@ -2621,7 +2662,7 @@ function netTick(dt){
     if(!s||typeof s.id!=='string'||s.id===NET.id||s.id.length>24) continue;
     present.add(s.id);
     let r=NET.peers.get(s.id); if(!r){r={id:s.id,first:now,q:-1,s:null,rx:0,seen:now,fresh:false};NET.peers.set(s.id,r)}
-    r.seen=now; if(s.q!==r.q){r.q=s.q;r.s=s;r.rx=now;r.fresh=true}
+    r.seen=now; if(s.q!==r.q){netArrive(s,now);const ar=NET.arr.get(s.id);r.q=s.q;r.s=s;r.rx=ar&&ar.q===num(s.q)?ar.at:now;r.fresh=true} // 届いた瞬間の時刻を使う（フレーム単位に丸めない）
   }
   NET.peers.forEach((r,k)=>{if(!present.has(k)&&now-r.seen>1500)NET.peers.delete(k)});
   if(NET.role==='h') hostTick(now); else guestTick(now);
@@ -2680,17 +2721,24 @@ function specConsume(now){
   if(best.f&8){const hb=best.r===hp;remoteCine(best.r.s,peerSkin(best.r),false,hb?cpu:you,peerSkin(hb?op:hp)||CPU_SKIN)}
   if((best.f&32)&&(best.f&1)){pkR=clamp(num(best.p[9],1),.003,1);pkT=performance.now()}
   const hard=best.e!==NET.epoch||NET.hidden; NET.epoch=best.e; NET.hidden=!!(best.f&4);
-  if(!NET.hidden) snapTo(best.p,Math.min(.25,(now-best.r.rx)/1000+.04),hard,false);
+  if(!NET.hidden) snapTo(best.p,Math.min(.25,(now-best.r.rx+num(best.r.s.pa))/1000+.04),hard,false);
   const hv=num(best.p[8])|0, prev=NET.specHc[best.r.id]; if(prev!==undefined&&hv>prev) remoteHit(); NET.specHc[best.r.id]=hv;
 }
 /* 毎フレーム送る（claude.ai は送信を自動でまとめる。MQTT は経路側で間引く） */
+let physT=0; const youVs={x:0,y:0};
+function youNow(now){ // 送る瞬間の自分のマレット（次の描画を待たずに、指の位置へ進めた分も含める）
+  if(state==='cine') return [you.x,you.y];
+  const dtp=Math.min(.03,Math.max(0,(now-physT)/1000)), c=clampMallet(target.x,target.y,false);
+  let dx=c[0]-you.x, dy=c[1]-you.y; const d=Math.hypot(dx,dy), md=YOU_VMAX*dtp; if(d>md){dx*=md/d;dy*=md/d}
+  return [you.x+dx,you.y+dy];
+}
 function publishTick(now){
-  if(now-NET.pubT<12) return; NET.pubT=now;
+  if(now-NET.pubT<9) return; NET.pubT=now;
   const S={id:NET.id,n:myName(),r:NET.role,q:++NET.seq,t:Math.round(now)};
   if(NET.role==='h'){const H=NET.hostG;S.g={gid:H.gid,st:H.st,opp:H.opp,win:WIN};S.sv=NET.srv?NET.srv.name:''}
   if(inMatch()&&NET.isPlayer){
     const g=NET.role==='g';
-    S.m=[r3(g?W-you.x:you.x),r3(g?L-you.y:you.y),r3(g?-you.vx:you.vx),r3(g?-you.vy:you.vy)];
+    const yp=youNow(now); S.m=[r3(g?W-yp[0]:yp[0]),r3(g?L-yp[1]:yp[1]),r3(g?-youVs.x:youVs.x),r3(g?-youVs.y:youVs.y)]; S.pa=Math.round(now-physT);
     S.c=NET.conceded; S.cg=NET.curGid; S.pg=NET.curGid; S.sk=skinArr(skin);
     S.p=NET.own?puckArr(1|(state==='goal'?4:0)|(state==='cine'?8:0)|(puck.sup?16:0)):NET.pOut;
     if(state==='cine'&&NET.own&&NET.cineOut) S.cn=NET.cineOut;
@@ -2698,6 +2746,8 @@ function publishTick(now){
   }
   try{NET.mesh.publish(S)}catch(e){}
 }
+/* 0.01秒ごとに送る（描画の60回/秒を待たない） */
+setInterval(()=>{if(NET.mesh&&!document.hidden&&inMatch()&&NET.isPlayer){try{publishTick(performance.now())}catch(e){}}},10);
 /* 裏タブでも通信と計算を止めない（rAF が止まるため Worker の時計で回す） */
 let bgW=null,bgLast=0;
 function bgClock(on){
@@ -2943,7 +2993,7 @@ document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',b
 /* ---- 設定：音量（効果音・音楽）とグラフィック ---- */
 const GFX_NAME={hi:'高',mid:'中',lo:'低'};
 const GFX_ROWS=[['3D確定演出',{hi:'フル',mid:'標準',lo:'軽量'}],['光のにじみ（ブルーム）',{hi:'ON',mid:'ON',lo:'OFF'}],['被写界深度ボケ',{hi:'ON',mid:'OFF',lo:'OFF'}],['影',{hi:'2灯',mid:'1灯',lo:'OFF'}],
-  ['色調・粒子・色ずれ',{hi:'ON',mid:'ON',lo:'OFF'}],['火花・紙吹雪',{hi:'100%',mid:'55%',lo:'30%'}],['ほこり・会場の灯り',{hi:'ON',mid:'ON',lo:'OFF'}],['描画解像度',{hi:'最高',mid:'標準',lo:'低'}],['残像・背景ぼかし',{hi:'ON',mid:'ON',lo:'OFF'}]];
+  ['色調・粒子・色ずれ',{hi:'ON',mid:'ON',lo:'OFF'}],['火花・紙吹雪',{hi:'100%',mid:'55%',lo:'30%'}],['ほこり・会場の灯り',{hi:'ON',mid:'ON',lo:'OFF'}],['盤面とマレット',{hi:'リアル',mid:'標準',lo:'単色'}],['描画解像度',{hi:'最高',mid:'高',lo:'標準'}],['残像・背景ぼかし',{hi:'ON',mid:'ON',lo:'OFF'}]];
 function cfgLabel(){document.querySelectorAll('[data-cfg]').forEach(s=>s.textContent=`SETTINGS · 音量・画質 ${GFX_NAME[gfx]}`)}
 function renderGfxList(){const ul=$('gfxList');ul.textContent='';for(const [n,v] of GFX_ROWS){const a=document.createElement('span'),b=document.createElement('b');a.textContent=n;b.textContent=v[gfx];b.className=v[gfx]==='OFF'?'off':'';ul.append(a,b)}ul.classList.remove('flash');void ul.offsetWidth;ul.classList.add('flash')}
 function volSync(){for(const [id,v] of [['sfxVol',sfxVol],['musVol',musVol]]){const el=$(id),pc=(v*100)+'%';el.querySelector('.vfill').style.width=pc;el.querySelector('.vthumb').style.left=pc;el.setAttribute('aria-valuenow',Math.round(v*100));$(id+'Txt').textContent=Math.round(v*100);el.parentNode.classList.toggle('mute',v<.005)}}
