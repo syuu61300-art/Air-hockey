@@ -71,14 +71,14 @@ canvas{display:block}
 
 /* ---- 画面切り替えの帯 ---- */
 .sweep{position:fixed;inset:0;pointer-events:none;z-index:55;overflow:hidden}
-.sweep i{position:absolute;top:-20%;bottom:-20%;left:-120%;width:85%;transform:skewX(-20deg)}
+.sweep i{position:absolute;top:-20%;bottom:-20%;left:-120%;width:85%;transform:skewX(-20deg);will-change:transform}
 .sweep i:nth-child(1){background:var(--red)}
 .sweep i:nth-child(2){background:var(--gold);width:14%}
 .sweep i:nth-child(3){background:#0b0d10}
 .sweep.run i{animation:sweep .78s cubic-bezier(.75,0,.25,1) both}
 .sweep.run i:nth-child(2){animation-delay:.05s}
 .sweep.run i:nth-child(3){animation-delay:.1s}
-@keyframes sweep{0%{left:-120%}100%{left:150%}}
+@keyframes sweep{0%{transform:translateX(0) skewX(-20deg)}100%{transform:translateX(270vw) skewX(-20deg)}}
 
 /* ---- メニュー（全画面・背景ぼかし・左中央） ---- */
 .ui{position:fixed;inset:0;z-index:20;overflow:hidden}
@@ -300,6 +300,32 @@ canvas{display:block}
 .sw[aria-checked="true"] i{background:var(--green)}
 .sw[aria-checked="true"] i::after{transform:translateX(18px)}
 .sw:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+[hidden]{display:none!important}
+.item.violet{--acc:#9d6bff}
+.segi.n4{grid-template-columns:repeat(4,1fr)} .segi.n4 .thumb{width:calc((100% - 6px)/4)}
+body.party .board{grid-template-columns:40px minmax(0,1fr) 40px} body.party .board .team,body.party .board .mid{display:none}
+.pboard{display:flex;gap:6px;justify-content:center;align-items:stretch;min-width:0}
+.pchip{flex:1 1 0;min-width:0;max-width:170px;display:flex;align-items:center;gap:8px;padding:4px 10px;background:var(--panel);border:1px solid var(--edge);border-bottom:3px solid var(--c);border-radius:10px}
+.pchip b{font:900 2.1rem var(--disp);line-height:.85;color:var(--l);font-variant-numeric:tabular-nums}
+.pchip span{font:800 .7rem var(--disp);letter-spacing:.08em;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pchip.mine{background:color-mix(in srgb,var(--c) 16%,var(--panel))} .pchip.mine span{color:var(--ink)}
+.mapcard{display:flex;align-items:center;gap:14px;width:100%;max-width:420px;padding:10px;border:1px solid var(--edge);border-radius:14px;background:rgba(9,11,14,.66);color:inherit;font:inherit;text-align:left;cursor:pointer}
+.mapcard canvas{width:110px;height:110px;flex:none;border-radius:10px}
+.mapcard span{display:flex;flex-direction:column;gap:4px;min-width:0} .mapcard b{font:800 1.05rem var(--body)} .mapcard small{font-size:.78rem;color:var(--muted);line-height:1.4} .mapcard em{font-style:normal;font:800 .74rem var(--disp);letter-spacing:.1em;color:var(--gold)}
+.maps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;max-width:640px}
+.mapc{display:flex;flex-direction:column;gap:6px;padding:8px;border:2px solid transparent;border-radius:14px;background:rgba(9,11,14,.66);color:inherit;font:inherit;text-align:left;cursor:pointer;transition:border-color .2s,background .2s}
+.mapc canvas{width:100%;aspect-ratio:1;height:auto;border-radius:9px}
+.mapc span{display:flex;flex-direction:column;gap:3px}
+.mapc b{font:800 .92rem var(--body)} .mapc small{font-size:.72rem;color:var(--muted);line-height:1.35}
+.mapc[aria-checked="true"]{border-color:var(--gold);background:rgba(244,197,52,.1)}
+.waitcfg{display:flex;flex-wrap:wrap;gap:8px}
+.wchip{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:7px 14px;border:1px solid var(--edge);border-radius:12px;background:rgba(9,11,14,.66);color:inherit;font:inherit;cursor:pointer}
+.wchip small{font:800 .62rem var(--disp);letter-spacing:.14em;color:var(--muted)} .wchip b{font:800 .95rem var(--body)}
+.wchip:disabled{cursor:default;opacity:.92} .wchip:not(:disabled)::after{content:"変更 ›";font:800 .62rem var(--disp);color:var(--gold);letter-spacing:.08em}
+.wchip.team{border-color:var(--gold)}
+.mkmode{margin:0;font-size:.86rem;color:var(--ink)} .mkmode b{color:var(--gold)}
+.pfinal .pn{font:900 clamp(3rem,15vw,5rem) var(--disp);line-height:.9}
+.prank{font-size:.82rem;line-height:1.6}
 .dev-and .ui-bg,body.gfx-mid .ui-bg{-webkit-backdrop-filter:none;backdrop-filter:none;background:linear-gradient(90deg,rgba(7,9,12,.9),rgba(7,9,12,.8) 55%,rgba(7,9,12,.66))} /* ぼかし（毎フレーム画面全体を処理）の代わりに濃い幕 */
 .gfxList.flash b{animation:gflash .45s both}
 @keyframes gflash{from{opacity:0;transform:translateX(10px)}}
@@ -308,6 +334,22 @@ canvas{display:block}
 body.gfx-lo .ui-bg{-webkit-backdrop-filter:none;backdrop-filter:none;background:linear-gradient(90deg,rgba(7,9,12,.88),rgba(7,9,12,.66) 60%,rgba(7,9,12,.5))}
 body.gfx-lo .ui-bg::after,body.gfx-lo .mym .disc::before{animation:none}
 body.gfx-lo .num{text-shadow:none} body.gfx-lo .banner{text-shadow:none!important}
+/* 画質ごとのアニメーション：高＝軽い動き（変形と透明度だけ・切り抜きや色フィルターなし）、中・低＝短いフェードだけ */
+.ui-bg::after{animation:none!important;display:none}
+body.gfx-hi .scr.in[data-a="slash"],body.gfx-hi .scr.in[data-a="iris"]{animation:a-fade .3s ease-out backwards}
+body.gfx-hi .scr.in[data-a="glitch"] .inner{animation:s-zoom .4s cubic-bezier(.2,.9,.25,1) backwards}
+body.gfx-hi .scr.in[data-a="boot"] .st,body.gfx-hi .scr.in[data-a="shutter"] .st,body.gfx-hi .scr.in[data-a="blinds"] .st,body.gfx-hi .scr.in[data-a="slash"] .st{animation-name:a-rise}
+body.gfx-hi .scr.in .st{animation-duration:.45s}
+body.gfx-hi .banner{text-shadow:4px 4px 0 rgba(11,13,16,.9)!important}
+body.gfx-mid .scr.in,body.gfx-lo .scr.in,body.gfx-mid .scr.in .inner,body.gfx-lo .scr.in .inner{animation:a-fade .2s ease-out backwards!important}
+body.gfx-mid .scr.in .st,body.gfx-lo .scr.in .st,body.gfx-mid .scr.in .mym,body.gfx-lo .scr.in .mym,body.gfx-mid .scr.in .result,body.gfx-lo .scr.in .result{animation:none!important}
+body.gfx-mid .mym .disc::before,body.gfx-mid .pat canvas,body.gfx-lo .pat canvas{animation:none;transition:none}
+body.gfx-mid .banner{text-shadow:none!important} body.gfx-mid .num{text-shadow:0 2px 0 rgba(0,0,0,.35)}
+body.gfx-mid .banner.show,body.gfx-lo .banner.show{animation:banl .9s ease-out forwards}
+@keyframes banl{0%{opacity:0}12%,70%{opacity:1}100%{opacity:0}}
+body.gfx-mid .sweep.run i{animation-duration:.5s}
+body.gfx-lo .sweep{display:none}
+body.gfx-mid .bump,body.gfx-lo .bump{animation:none}
 
 /* ---- 画面ごとに違う登場アニメーション ---- */
 .scr.in .st{animation-duration:.6s;animation-fill-mode:backwards;animation-timing-function:cubic-bezier(.2,.9,.25,1);animation-delay:calc(var(--i,0) * 65ms + 60ms)}
@@ -355,6 +397,7 @@ body.gfx-lo .num{text-shadow:none} body.gfx-lo .banner{text-shadow:none!importan
 
 <header class="board" id="board">
   <span aria-hidden="true"></span>
+  <div class="pboard" id="pboard" hidden></div>
   <div class="team cpu"><span class="lbl" id="lblC">CPU</span><span class="num" id="sc">0</span></div>
   <div class="mid" title="あなたの直前のショットの球速"><div class="shot" id="shot">0<small>KM/H</small></div><div class="cap" id="cap">SHOT · FIRST TO 7</div></div>
   <div class="team you"><span class="num" id="sy">0</span><span class="lbl" id="lblY">YOU</span></div>
@@ -453,12 +496,15 @@ body.gfx-lo .num{text-shadow:none} body.gfx-lo .banner{text-shadow:none!importan
   <section class="scr" id="s-online" hidden>
     <div class="inner">
       <button class="backb st" type="button" data-back>BACK</button>
-      <div class="head"><div class="kicker st">ONLINE PLAY · 1 VS 1</div><h2 class="ttl st">オンラインプレイ</h2></div>
+      <div class="head"><div class="kicker st">ONLINE PLAY · 1VS1 / TRIO / TEAM</div><h2 class="ttl st">オンラインプレイ</h2></div>
       <label class="field st"><span class="flabel">NAME<b>表示名</b></span><input class="inp" id="nameIn" maxlength="12" autocomplete="nickname" enterkeyhint="done"></label>
       <nav class="menu" aria-label="オンラインメニュー">
         <button class="item gold st" type="button" id="quickBtn" data-focus><span class="jp">自動マッチ</span><span class="en">QUICK MATCH</span><span class="arr"></span></button>
         <button class="item st" type="button" data-go="create"><span class="jp">サーバーを作る</span><span class="en">CREATE SERVER</span><span class="arr"></span></button>
         <button class="item blue st" type="button" data-go="join"><span class="jp">サーバーに参加</span><span class="en">JOIN SERVER</span><span class="arr"></span></button>
+        <button class="item green st" type="button" id="trioBtn"><span class="jp">トリオモード</span><span class="en">TRIO · 三角のリンクで3人対戦</span><span class="arr"></span></button>
+        <button class="item violet st" type="button" id="teamBtn"><span class="jp">チームモード</span><span class="en">TEAM · 2VS2〜5VS5</span><span class="arr"></span></button>
+        <button class="item grey st" type="button" data-go="map"><span class="jp">マップの変更</span><span class="en" id="mapSub">MAP · クラシック</span><span class="arr"></span></button>
         <button class="item grey mini st" type="button" data-go="net"><span class="jp">接続方法</span><span class="en" id="netSub">CONNECTION · 自動</span><span class="arr"></span></button>
       </nav>
       <p class="note st" id="onNote" aria-live="polite"></p>
@@ -470,6 +516,7 @@ body.gfx-lo .num{text-shadow:none} body.gfx-lo .banner{text-shadow:none!importan
       <button class="backb st" type="button" data-back>BACK</button>
       <div class="head"><div class="kicker st">CREATE SERVER</div><h2 class="ttl st">サーバーを作る</h2></div>
       <label class="field st"><span class="flabel">SERVER NAME<b>サーバー名</b></span><input class="inp" id="mkName" maxlength="20" placeholder="例：放課後リーグ" enterkeyhint="go"></label>
+      <p class="mkmode st" id="mkMode"></p>
       <button class="cta st" type="button" id="makeBtn" data-focus>作成する</button>
       <p class="note st" id="mkNote" aria-live="polite">作ったサーバーは一覧に出ます。名前を伝えれば、相手は名前を入れて参加できます。3人目からは観戦です。</p>
     </div>
@@ -507,10 +554,40 @@ body.gfx-lo .num{text-shadow:none} body.gfx-lo .banner{text-shadow:none!importan
   <section class="scr" id="s-wait" hidden>
     <div class="inner">
       <div class="head"><div class="kicker st">SERVER · LOBBY</div><h2 class="ttl st" id="waitTitle"></h2></div>
+      <div class="waitcfg st" id="waitCfg" hidden>
+        <button type="button" class="wchip" id="wcMode"><small>MODE</small><b id="wcModeT"></b></button>
+        <button type="button" class="wchip" id="wcMap"><small>MAP</small><b id="wcMapT"></b></button>
+        <button type="button" class="wchip team" id="wcTeam" hidden><small>TEAM</small><b id="wcTeamT">チーム変更</b></button>
+      </div>
       <ul class="members st" id="waitList"></ul>
       <p class="note st" id="waitNote"></p>
       <div class="row st"><button class="cta" type="button" id="hostStart" data-focus>試合開始</button><button class="backb" type="button" id="leaveBtn">LEAVE · 退出</button></div>
       <p class="log st" id="netLog2"></p>
+    </div>
+  </section>
+
+  <section class="scr" id="s-party" hidden>
+    <div class="inner">
+      <button class="backb st" type="button" data-back>BACK</button>
+      <div class="head"><div class="kicker st" id="pKick">PARTY MODE</div><h2 class="ttl st" id="pTitle">トリオモード</h2></div>
+      <div class="field st"><span class="flabel" id="pmLbl">MODE<b>あそび方</b></span>
+        <div class="segi" id="pmSeg" role="radiogroup" aria-labelledby="pmLbl"><span class="thumb" aria-hidden="true"></span><button type="button" role="radio" data-v="duo">1vs1</button><button type="button" role="radio" data-v="trio">トリオ</button><button type="button" role="radio" data-v="team">チーム</button></div></div>
+      <div class="field st" id="pnRow"><span class="flabel" id="pnLbl">TEAM SIZE<b>人数（多いほどリンクとパックが大きくなります）</b></span>
+        <div class="segi n4" id="pnSeg" role="radiogroup" aria-labelledby="pnLbl"><span class="thumb" aria-hidden="true"></span><button type="button" role="radio" data-v="2">2vs2</button><button type="button" role="radio" data-v="3">3vs3</button><button type="button" role="radio" data-v="4">4vs4</button><button type="button" role="radio" data-v="5">5vs5</button></div></div>
+      <div class="field st"><span class="flabel">MAP<b>マップ</b></span>
+        <button class="mapcard" id="pMapBtn" type="button"><canvas id="pMapPrev" width="220" height="220"></canvas><span><b id="pMapNm"></b><small id="pMapDesc"></small><em>マップを変える ›</em></span></button></div>
+      <button type="button" class="sw st" id="pCpu" role="switch" aria-checked="true"><span class="swt"><b>空いた枠は CPU が入る</b><small>人数が足りなくてもすぐ遊べます。途中で抜けた人の枠も CPU が引き継ぎます</small></span><i aria-hidden="true"></i></button>
+      <p class="note st" id="pNote"></p>
+      <div class="row st"><button class="cta" type="button" id="pCreate" data-focus>このモードでサーバーを作る</button><button class="cta small blue" type="button" id="pJoin">参加する</button><button class="cta" type="button" id="pBack" hidden>待機室に戻る</button></div>
+    </div>
+  </section>
+
+  <section class="scr" id="s-map" hidden>
+    <div class="inner">
+      <button class="backb st" type="button" data-back>BACK</button>
+      <div class="head"><div class="kicker st">MAP SELECT · 12 MAPS</div><h2 class="ttl st">マップの変更</h2></div>
+      <div class="maps st" id="mapList" role="radiogroup" aria-label="マップ"></div>
+      <p class="note st" id="mapNote"></p>
     </div>
   </section>
 
@@ -530,6 +607,8 @@ body.gfx-lo .num{text-shadow:none} body.gfx-lo .banner{text-shadow:none!importan
       <div class="head"><div class="kicker st" id="resEyebrow">GAME SET</div><h2 class="ttl disp result st" id="resTitle">YOU WIN</h2></div>
       <div class="starsOut st" id="resStars" hidden></div>
       <div class="final st"><span class="c" id="resC">0</span><span class="d">–</span><span class="y" id="resY">0</span></div>
+      <div class="final pfinal st" id="pFinal" hidden></div>
+      <p class="note prank st" id="pRank" hidden></p>
       <div class="stats st">
         <div class="stat"><b id="resShot">0</b><span>最高球速 km/h</span></div>
         <div class="stat"><b id="resRally">0</b><span>最長ラリー<br>（往復）</span></div>
@@ -596,9 +675,9 @@ const DEV=(()=>{const ua=navigator.userAgent||'',and=/Android/i.test(ua),ios=/iP
 document.documentElement.classList.toggle('dev-and',DEV.and);
 const GRANK={lo:0,mid:1,hi:2}, TIER_GFX=['lo','mid','hi'];
 const GFX={
-  hi:{pr3:2,post:true,bloom:true,bokeh:true,shadow:2,shadowRes:2048,spark:1,conf:1,dust:true,cv2:2.5,cineDpr:2,spark2:1.4,trail:true,ovl:true,detail:true,glfx:true,real:true},
-  mid:{pr3:1,post:true,bloom:true,bokeh:false,shadow:1,shadowRes:1024,spark:.55,conf:.6,dust:true,cv2:2,cineDpr:1.5,spark2:.7,trail:true,ovl:true,simple:true},
-  lo:{pr3:.75,post:false,bloom:false,bokeh:false,shadow:0,spark:.3,conf:.35,dust:false,cv2:1.5,cineDpr:1,spark2:0,trail:false,ovl:false,flat:true}};
+  hi:{pr3:2,post:true,bloom:true,bokeh:true,shadow:2,shadowRes:2048,spark:.6,conf:.6,dust:true,shakeK:.5,cv2:2.5,cineDpr:2,spark2:.8,trail:true,ovl:true,detail:true,glfx:true,real:true},
+  mid:{pr3:1,post:true,bloom:true,bokeh:false,shadow:1,shadowRes:1024,spark:.35,conf:.35,dust:false,shakeK:.25,cv2:2,cineDpr:1.5,spark2:.4,trail:true,ovl:true,simple:true},
+  lo:{pr3:.75,post:false,bloom:false,bokeh:false,shadow:0,spark:.15,conf:.2,dust:false,shakeK:0,cv2:1.5,cineDpr:1,spark2:0,trail:false,ovl:false,flat:true}};
 // 段階の設定に端末ごとの上限をかけたもの（スマホは解像度を抑え、3D は 60fps で描く。Android はさらに影・ボケ・重ねる効果を減らす）
 function gqFor(lv){const q=Object.assign({},GFX[lv]);
   if(DEV.mob){q.pr3=Math.min(q.pr3,DEV.ios?2:1.5);q.cineDpr=Math.min(q.cineDpr,DEV.ios?2:1.5);q.cv2=Math.min(q.cv2,2)}
@@ -950,6 +1029,7 @@ function afterGoal(){
   }else{serve(lastScorer==='cpu');matchPoint()}
 }
 function fillOver(title,good,eyebrow){
+  document.querySelector('#s-over .final:not(.pfinal)').hidden=false; $('pFinal').hidden=true; $('pRank').hidden=true; document.querySelector('#s-over .stats').hidden=false;
   $('resEyebrow').textContent=eyebrow; $('resTitle').textContent=title; $('resTitle').style.color=good?'#ff8670':'#82b0ff';
   $('resC').textContent=score.cpu; $('resY').textContent=score.you;
   $('resShot').textContent=stats.max; $('resRally').textContent=stats.best; $('resSuper').textContent=`${rolls.win} / ${rolls.n}`;
@@ -971,6 +1051,7 @@ function animResult(good){
   document.querySelectorAll('#resStars i').forEach((el,i)=>resTs.push(setTimeout(()=>{el.classList.add('pop');const on=el.classList.contains('on');sfx.ui(on?'star':'star0',i);if(on)buzz(10)},1600+i*300)));
 }
 function update(dt){
+  if(PT.on){partyUpdate(dt);return}
   if(state==='menu'){demoUpdate(dt);return}
   if(NET.mode==='online'){onlineUpdate(dt);return}
   if(state==='cine') return;
@@ -1020,7 +1101,7 @@ function toMenu(){
 }
 
 /* ===== 演出 ===== */
-function addRing(x,y,s,c){rings.push({x,y,s,c,t:0,life:.3+.25*s});if(rings.length>24)rings.shift()}
+function addRing(x,y,s,c){if(GQ.flat&&s<.5)return;rings.push({x,y,s,c,t:0,life:.3+.25*s});if(rings.length>24)rings.shift()}
 function addSparks(x,y,nx,ny,s){
   const n=Math.round((3+s*8)*GQ.spark2);
   for(let i=0;i<n;i++){const a=Math.atan2(ny,nx)+(Math.random()-.5)*2.2,v=(1.2+Math.random()*2.6)*s;
@@ -1039,7 +1120,7 @@ function hitFx(x,y,nx,ny,s,kind,who){
   if(who==='you'&&s>.3) buzz(8);
 }
 function remoteHit(){addRing(puck.x,puck.y,.6,'#ffffff');sfx.hit(.55,'mallet')}
-function shake(a){shakeA=Math.max(shakeA,a)}
+function shake(a){shakeA=Math.max(shakeA,a*(GQ.shakeK!=null?GQ.shakeK:1))} // 画面の揺れは画質ごとに小さく（低はなし）
 function buzz(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 const bannerEl=$('banner');
 function banner(t,c,jp){bannerEl.textContent=t;bannerEl.style.color=c;bannerEl.style.textShadow=`4px 4px 0 rgba(11,13,16,.9),0 0 36px ${hexA(c,.5)}`;
@@ -1140,7 +1221,8 @@ function drawOverlay(dt){
   if(btV<.01&&!bt.on&&!oc) return;
   R3.dirty=true;
   const g=ctx; g.save(); g.setTransform(dpr,0,0,dpr,0,0); g.globalAlpha=1;
-  if(btV>.01){
+  if(btV>.01&&GQ.flat){g.strokeStyle=`rgba(244,197,52,${.5*btV})`;g.lineWidth=4;g.strokeRect(2,2,cw-4,ch-4)}
+  else if(btV>.01){
     const q=bt.on?((bt.t-.15)%.62+.62)%.62:.62, pulse=Math.exp(-q*7), R=Math.hypot(cw,ch)/2, gr=g.createRadialGradient(cw/2,ch/2,R*.32,cw/2,ch/2,R);
     if(GQ.ovl){gr.addColorStop(0,'rgba(6,8,12,0)');gr.addColorStop(1,`rgba(6,8,12,${.3*btV})`);g.fillStyle=gr;g.fillRect(0,0,cw,ch)}
     g.strokeStyle=`rgba(244,197,52,${(.22+.5*pulse)*btV})`;g.lineWidth=3+7*pulse;g.strokeRect(1.5,1.5,cw-3,ch-3);
@@ -1586,6 +1668,13 @@ function t3ApplyGfx(){
   T3.scene.traverse(upd); Object.values(T3.mc).forEach(m=>m.traverse(upd));
 }
 // 演出が始まる前に、使うシェーダーとマレットを全部準備しておく（3%を引いた瞬間に固まらないように）
+function t3Prep(){
+  if(T3.st!=='ready'||cine.on||!GQ.real) return;
+  const o=NET.mode==='online'?(NET.role==='h'?(NET.hostG.opp&&NET.peers.get(NET.hostG.opp)):NET.hostPeer):null, osk=(o&&peerSkin(o))||CPU_SKIN;
+  const sig=skinArr(osk).join('|')+'#'+skinArr(skin).join('|'); if(T3.prepSig===sig) return; T3.prepSig=sig;
+  try{const add=[];for(const [role,sk] of [['o',osk],['h',skin],['h',osk],['o',skin]]){const m=t3GetM(role,sk,skinArr(sk).join('|'));if(!m.parent){m.visible=false;T3.scene.add(m);add.push(m)}}
+    T3.r.compile(T3.scene,T3.cam); add.forEach(m=>{T3.scene.remove(m);m.visible=true})}catch(e){console.warn('prep',e)}
+}
 function t3Warm(){
   if(T3.st!=='ready'||cine.on) return;
   const keep={d:cine.d,F:cine.F,E:cine.E,replay:cine.replay,dt:cine.dt,t0:cine.t0};
@@ -1602,7 +1691,7 @@ function t3Warm(){
   r3Apply(); if(R3.on){R3.w=0;r3Layout(true)}
 }
 function applyGfx(){
-  const lvCh=GQ&&GQ._lv!==gfx; GQ=gqFor(gfx); GQ._lv=gfx; gfxChT=performance.now(); if(lvCh&&T3.st==='ready')T3.dyn=1; // 段階が変わったら3Dの解像度の自動調整もやり直す document.body.classList.toggle('gfx-lo',gfx==='lo'); document.body.classList.toggle('gfx-mid',gfx==='mid');
+  const lvCh=GQ&&GQ._lv!==gfx; GQ=gqFor(gfx); GQ._lv=gfx; gfxChT=performance.now(); document.body.classList.toggle('gfx-hi',gfx==='hi'); if(lvCh&&T3.st==='ready')T3.dyn=1; // 段階が変わったら3Dの解像度の自動調整もやり直す document.body.classList.toggle('gfx-lo',gfx==='lo'); document.body.classList.toggle('gfx-mid',gfx==='mid');
   resize(); fxApply(); if(cine.on) sizeCine();
   if(T3.st==='ready'&&!cine.on){t3ApplyGfx();T3.w=0;t3Size();setTimeout(t3Warm,80)}
   r3Apply();
@@ -2254,7 +2343,7 @@ function fxInit(){
     return FX.ok=true;
   }catch(e){console.warn('fx',e);return FX.ok=false}
 }
-function fxApply(){FX.on=!!(GQ.glfx&&!R3.on&&fxInit());const c=$('fx');c.hidden=!FX.on;cv.style.opacity=FX.on?'0':'';if(!FX.on)FX.rip.length=0}
+function fxApply(){FX.on=!!(GQ.glfx&&!R3.on&&!(typeof PT!=='undefined'&&PT.on)&&fxInit());const c=$('fx');c.hidden=!FX.on;cv.style.opacity=FX.on?'0':'';if(!FX.on)FX.rip.length=0}
 function fxRipple(x,y,a,life,sp){if(!FX.on)return;FX.rip.push({x,y,t:0,a,life:life||.55,sp:sp||1.5});if(FX.rip.length>6)FX.rip.shift()}
 function fxRender(dt){
   const gl=FX.gl; if(!gl) return; const Wc=cv.width,Hc=cv.height;
@@ -2283,7 +2372,7 @@ function fxRender(dt){
 
 /* ===== 高画質：ゲーム画面そのものを実物そっくりの3Dで描く（PBR・環境反射・2灯の影・光のにじみ） ===== */
 const R3={on:false,w:0,h:0,pr:0,flash:0,base:null,tg:null,ring:null,lowT:0,t:0};
-function r3Can(){return !!(GQ.real&&T3.st==='ready')}
+function r3Can(){return !!(GQ.real&&T3.st==='ready'&&!(typeof PT!=='undefined'&&PT.on))}
 function r3Apply(){
   const want=r3Can();
   if(want&&!R3.on){R3.on=true;R3.w=0;document.body.classList.add('real3d');fxApply();if(!cine.on)r3Layout(true)}
@@ -2616,6 +2705,7 @@ function goalLight(y,dir,amt,strip,glow){
 }
 function render(dt,now){
   if(!SP.puck) return;
+  if(PT.on){partyRender(dt,now);return}
   if(R3.on){if(R3.dirty!==false){ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height)}R3.dirty=false; // 実物そっくりの3Dで描き、2Dは文字や軌跡だけ重ねる
     if(!cine.on){try{r3Render(dt)}catch(e){console.warn('r3',e);GFX.hi.real=false;GQ.real=false;r3Apply();return}r3Overlay(dt)}
     drawOverlay(dt);return}
@@ -2665,13 +2755,15 @@ function fpsUi(){
   if(cur==='settings'){const el=$('fpsNote'),c=f>=55?'#3fbf86':f>=38?'#f4c534':'#ee4631';el.style.setProperty('--lv',Math.min(100,f/60*100)+'%');el.style.setProperty('--lc',c);
     el.querySelector('span').textContent=`いまの描画 ${f} fps · ${capped?'30fpsに制限中：iPhoneの低電力モードがオンだと30fps（操作と計算は120回/秒で動いています）':f>=55?'なめらか':gfx==='lo'?'これ以上は軽くできません':f>=38?`少し重い：「${gfx==='hi'?'中':'低'}」がおすすめ`:`重い：「${gfx==='hi'?'中':'低'}」がおすすめ`}`}
   // 下げる切り替え（シェーダーの準備で一瞬止まる）は、試合中ではなく得点のあとなどの区切りで行う
+  if(R3.dynPend&&state!=='play'&&!cine.on){const d=R3.dynPend;R3.dynPend=0;if(T3.st==='ready'&&d!==T3.dyn){T3.dyn=d;if(R3.on)r3Layout(true)}}
   if(gfxPend&&state!=='play'&&!cine.on&&cur!=='settings'){const nv=gfxPend;gfxPend=null;if(GRANK[nv]<GRANK[gfx]){gfx=nv;savePrefs();applyGfx();toast(`動きが重いので、グラフィックを自動で「${GFX_NAME[nv]}」に下げました（設定で変えられます）`)}return}
   if(cur==='settings'||cine.on||gfxPend||now-gfxChT<4500||now<6000||capped||(state!=='play'&&state!=='menu')){slowT=0;return} // 切り替え直後（シェーダー準備中）や演出中は数えない
   if(R3.on){R3.lowT=f<46?R3.lowT+.5:Math.max(0,R3.lowT-.5);R3.okT=f>=57?(R3.okT||0)+.5:0; // まず3Dの解像度を下げ、余裕が戻れば少しずつ上げる
-    if(R3.lowT>=2&&(T3.dyn||1)>.62){T3.dyn=Math.max(.6,(T3.dyn||1)*.85);R3.lowT=0;r3Layout(true)}
-    else if(R3.okT>=8&&(T3.dyn||1)<1){T3.dyn=Math.min(1,T3.dyn*1.08);R3.okT=0;r3Layout(true)}}
+    const d0=R3.dynPend||T3.dyn||1; let d1=d0;
+    if(R3.lowT>=2&&d0>.62){d1=Math.max(.6,d0*.85);R3.lowT=0} else if(R3.okT>=8&&d0<1){d1=Math.min(1,d0*1.08);R3.okT=0}
+    if(d1!==d0){if(state==='play')R3.dynPend=d1;else{T3.dyn=d1;R3.dynPend=0;r3Layout(true)}}}
   slowT=f<40?slowT+.5:Math.max(0,slowT-.5);
-  if(slowT>=3.5&&gfx!=='lo'&&(!R3.on||(T3.dyn||1)<=.62)){slowT=0; // 解像度を下げきってもまだ重いときは、段階を1つ下げる
+  if(slowT>=3.5&&gfx!=='lo'&&(!R3.on||(R3.dynPend||T3.dyn||1)<=.62)){slowT=0; // 解像度を下げきってもまだ重いときは、段階を1つ下げる
     const nv=gfx==='hi'?'mid':'lo';
     if(autoGfx) gfxPend=nv;
     else if(!slowTold){slowTold=true;toast(`動きが重いようです。設定のグラフィックを「${GFX_NAME[nv]}」にすると軽くなります`)}}
@@ -2681,7 +2773,7 @@ function resize(){
   dpr=Math.max(1,pxCap(Math.min(window.devicePixelRatio||1,GQ.cv2),cw,ch,GQ.maxPx));
   cv.width=Math.round(cw*dpr); cv.height=Math.round(ch*dpr);
   S=Math.min((cw-12)/(W+2*RAIL),(ch-12)/(L+2*RAIL)); ox=(cw-W*S)/2; oy=(ch-L*S)/2;
-  buildStatic(); buildSprites(); if(R3.on)r3Layout(); render(0,performance.now());
+  buildStatic(); buildSprites(); if(R3.on)r3Layout(); if(PT.on)paLayout(true); render(0,performance.now());
 }
 if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
 window.addEventListener('resize',resize);
@@ -2691,6 +2783,7 @@ window.addEventListener('orientationchange',()=>setTimeout(resize,250));
 const overlayOpen=()=>cur!==null;
 function aimAt(cx,cy){
   if(overlayOpen()) return;
+  if(PT.on){partyAim(cx,cy);return}
   if(R3.on&&!cine.on){const p=r3Unproject(cx,cy);if(p){target.x=p[0];target.y=p[1]}return}
   if(!rect||!rect.width) rect=stage.getBoundingClientRect();
   target.x=(cx-rect.left-ox)/S; target.y=(cy-rect.top-oy)/S;
@@ -2731,6 +2824,7 @@ function keyMove(){
   if(keys.has('arrowleft')||keys.has('a'))dx--; if(keys.has('arrowright')||keys.has('d'))dx++;
   if(keys.has('arrowup')||keys.has('w'))dy--; if(keys.has('arrowdown')||keys.has('s'))dy++;
   if(!dx&&!dy) return;
+  if(PT.on){partyKey(dx,dy);return}
   const m=Math.hypot(dx,dy), c=clampMallet(you.x,you.y,false);
   target.x=clamp(c[0]+dx/m*.09,MR,W-MR); target.y=clamp(c[1]+dy/m*.09,L/2,L-MR);
 }
@@ -2937,25 +3031,27 @@ function listServers(){
   if(NET.api){let ps=[];try{ps=NET.api.peers()}catch(e){}
     for(const p of ps){if(p.isMe&&p.sameTab)continue;const pr=p.presence||{},s=pr.srv;
       if(pr.app!=='ah2'||!s||typeof s.code!=='string'||!/^[0-9a-f]{8,24}$/.test(s.code))continue;
-      out.push({nm:cleanSrv(s.nm)||'(名前なし)',code:s.code,hn:cleanName(s.hn),n:num(s.n,1)|0,open:s.open?1:0,st:s.st==='play'?'play':s.st==='over'?'over':'wait',via:'room'})}}
+      out.push({nm:cleanSrv(s.nm)||'(名前なし)',code:s.code,hn:cleanName(s.hn),n:num(s.n,1)|0,open:s.open?1:0,st:s.st==='play'?'play':s.st==='over'?'over':'wait',via:'room',pm:Array.isArray(s.pm)?s.pm:null,cap:num(s.cap,2)|0,pl:num(s.pl,0)|0})}}
   NET.lobbyMq.forEach((s,k)=>{if(now-s.seen>7000)NET.lobbyMq.delete(k);else if(!out.some(o=>o.code===s.code))out.push(s)});
   return NET.srv&&NET.role==='h'?out.filter(s=>s.code!==NET.srv.code):out;
 }
 function renderServers(){
-  const list=listServers(), sig=JSON.stringify(list.map(s=>[s.code,s.nm,s.hn,s.n,s.open,s.st]))+(NET.apiTried?1:0);
+  const list=listServers(), sig=JSON.stringify(list.map(s=>[s.code,s.nm,s.hn,s.n,s.open,s.st,s.pm,s.pl]))+(NET.apiTried?1:0);
   if(sig===NET.srvSig) return; NET.srvSig=sig;
   const box=$('srvList'); box.textContent='';
   if(!list.length){const p=document.createElement('p');p.className='empty';p.textContent=NET.apiTried?'いま開いているサーバーはありません。「サーバーを作る」から作れます。':'サーバーを探しています…';box.appendChild(p);return}
   for(const s of list){
     const b=document.createElement('button');b.type='button';b.className='srv';if(!s.open)b.style.setProperty('--acc','#7d8792');
     const a=document.createElement('span'),nm=document.createElement('b'),sm=document.createElement('small');
-    nm.textContent=s.nm; sm.textContent=`${s.hn||'ホスト'}・${s.open?'1/2人':'2/2人'}${s.n>2?`・観戦${s.n-2}`:''}・${s.st==='wait'?'待機中':'対戦中'}`;
+    const pc=s.pm?cleanCfg({m:s.pm[0],n:s.pm[1],map:s.pm[2]}):null, party=pc&&!isClassic(pc);
+    nm.textContent=s.nm; sm.textContent=party?`${s.hn||'ホスト'}・${modeLabel(pc)}・${MAPS[pc.map].name}・${s.pl||1}/${s.cap||capOf(pc)}人・${s.st==='wait'?'待機中':'対戦中'}`:`${s.hn||'ホスト'}・${s.open?'1/2人':'2/2人'}${s.n>2?`・観戦${s.n-2}`:''}・${s.st==='wait'?'待機中':'対戦中'}`;
     a.append(nm,sm); const go_=document.createElement('span');go_.className='go';go_.textContent=s.open?'JOIN':'WATCH';
     b.append(a,go_); b.addEventListener('click',()=>{joinServer(s.nm,s.code,s.via==='room'?'room':'p2p')}); box.appendChild(b);
   }
 }
 function lobbyAnnounce(){
-  const srv=NET.mode==='online'&&NET.role==='h'&&NET.srv?{nm:NET.srv.name,code:NET.srv.code,hn:myName(),n:1+NET.peers.size,open:NET.hostG.opp?0:1,st:NET.hostG.st}:null;
+  const pc=cleanCfg(PT.on?PT.cfg:PCFG), cls=isClassic(pc), hum=1+[...NET.peers.values()].filter(r=>r.s&&r.s.r==='g').length;
+  const srv=NET.mode==='online'&&NET.role==='h'&&NET.srv?{nm:NET.srv.name,code:NET.srv.code,hn:myName(),n:1+NET.peers.size,open:cls?(NET.hostG.opp?0:1):(hum<capOf(pc)?1:0),st:NET.hostG.st,pm:[pc.m,pc.n,pc.map],cap:capOf(pc),pl:Math.min(hum,capOf(pc))}:null;
   const sig=JSON.stringify(srv);
   if(NET.api&&sig!==NET.lastAnn){NET.lastAnn=sig;NET.api.presence({app:'ah2',srv}).catch(()=>{})}
   if(srv&&NET.mesh&&NET.mesh.kind==='multi'&&POOL.clients) poolPub(LOBBY_T,sig,3);
@@ -3007,6 +3103,7 @@ function enterOnline(mesh,role,srv){
   state='menu'; resetPositions(); demoServe(); resetMatchUI(); bgClock(true); setLabels(); setCap();
 }
 function leaveOnline(msg){
+  paStop();
   try{NET.mesh&&NET.mesh.close()}catch(e){}
   NET.mesh=null;NET.mode='solo';NET.role=null;NET.srv=null;NET.peers.clear();NET.oppPeer=null;NET.hostPeer=null;NET.specOpp=null;
   NET.curGid=-1;NET.isPlayer=false;NET.overT=0;NET.hidden=false;NET.own=false;
@@ -3015,6 +3112,7 @@ function leaveOnline(msg){
   NET.srvSig=''; hist.length=0; hist.push('home'); go('online',{back:true}); note('onNote',msg||'',!!msg); if(msg) toast(msg);
 }
 function toWaitRoom(msg){
+  paStop();
   state='menu'; NET.overT=0; NET.own=false; NET.hidden=false; sfx.air(false);
   resetPositions(); demoServe(); setLabels(); hist.length=0; hist.push('home','online'); go('wait',{noHist:true}); if(msg) toast(msg);
 }
@@ -3022,6 +3120,7 @@ function toWaitRoom(msg){
 /* ---- 試合 ---- */
 function inMatch(){return NET.mode==='online'&&(state==='play'||state==='goal'||state==='over'||state==='cine')}
 function startOnline(gid){
+  t3Prep();
   WIN=7; AIP=aiParams(DIFF_K.normal); match.mp=false;
   NET.curGid=gid;NET.conceded=0;NET.oppC=0;NET.epoch=0;NET.own=false;NET.pOut=null;NET.hc=0;NET.lastOppHc=-1;NET.err[0]=NET.err[1]=0;
   NET.overT=0;NET.specKey='';NET.specHc={};NET.specInit=true;
@@ -3032,7 +3131,7 @@ function startOnline(gid){
   state='play'; setLabels(); setCap(); sfx.init(); sfx.resume(); sfx.air(true); last=performance.now();
   sweep(()=>{closeUI();banner(NET.isPlayer?'GO!':'WATCH',COL.gold);if(!NET.isPlayer)toast('観戦中：2人の試合を見ています')});
 }
-function hostStartMatch(){const H=NET.hostG;if(!H.opp)return;H.gid++;H.st='play';startOnline(H.gid);lobbyAnnounce()}
+function hostStartMatch(){if(!isClassic(cleanCfg(PCFG))){hostStartParty();return}const H=NET.hostG;if(!H.opp)return;H.gid++;H.st='play';startOnline(H.gid);lobbyAnnounce()}
 function handoff(){NET.own=false;NET.epoch++;NET.pOut=puckArr(2|(puck.sup?16:0))}
 function puckArr(f){
   const g=NET.role==='g', x=g?W-puck.x:puck.x, y=g?L-puck.y:puck.y, vx=g?-puck.vx:puck.vx, vy=g?-puck.vy:puck.vy;
@@ -3073,7 +3172,7 @@ function overSpectate(){
   const hn=nm(NET.hostPeer), on=nm(NET.specOpp), hostWin=score.you>=WIN;
   fillOver(`${hostWin?hn:on} WIN`,hostWin,`観戦 · ${hn} VS ${on}`);
 }
-function rematch(){if(NET.role!=='h')return;const H=NET.hostG;if(!H.opp){toWaitRoom('対戦相手がいません');return}H.gid++;H.st='play';startOnline(H.gid);lobbyAnnounce()}
+function rematch(){if(NET.role!=='h')return;if(!isClassic(cleanCfg(PCFG))){paStop();hostStartParty();return}const H=NET.hostG;if(!H.opp){toWaitRoom('対戦相手がいません');return}H.gid++;H.st='play';startOnline(H.gid);lobbyAnnounce()}
 function onlineUpdate(dt){
   if(NET.overT>0){NET.overT-=dt;if(NET.overT<=0&&NET.overFn){const f=NET.overFn;NET.overFn=null;f()}}
   if(!inMatch()) return;
@@ -3110,8 +3209,10 @@ function bufAt(B,t){
 }
 /* 相手マレット：送り手の時計で並べた位置を補間し（届く間隔の揺れを吸収）、遅れの分だけ滑らかに先読みする */
 function remoteMallet(r,flip){
-  if(!r) return null; const B=NET.mb.get(r.id); if(!B||B.length<3) return drPos(r,flip);
-  const now=performance.now(); if(now-B[B.length-1].at>400) return drPos(r,flip);
+  if(!r) return null; return bufRead(NET.mb.get(r.id),r,flip)||drPos(r,flip);
+}
+function bufRead(B,r,flip){
+  if(!B||B.length<3) return null; const now=performance.now(); if(now-B[B.length-1].at>400) return null;
   const off=B.off; // いちばん速く届いた便を基準に時計を合わせる
   const J=B.map(b=>b.at-b.ts-off).sort((a,b)=>a-b), j90=J[Math.min(J.length-1,Math.floor(J.length*.9))], iv=(B[B.length-1].ts-B[0].ts)/(B.length-1);
   // 待ち時間は「10回に9回は間に合う」だけ取り、上げるときは速く・下げるときはゆっくり（再生の速さが急に変わらない）
@@ -3120,7 +3221,7 @@ function remoteMallet(r,flip){
   const delay=r.dl, tp=now-off-delay;
   const P=bufAt(B,tp), Q=bufAt(B,tp-50), lead=Math.min(.065,(delay+(NET.rtt||50)/2)/1000)*.85;
   // 遅れの分だけ先読みする量は、それ自体をなめらかにしてから足す（先読みのガタつきを出さない）
-  const lx=clamp((P[0]-Q[0])/.05*lead,-.07,.07), ly=clamp((P[1]-Q[1])/.05*lead,-.07,.07), kl=1-Math.exp(-el/35);
+  const lm=.07*(PT.on?PT.A.F:1), lx=clamp((P[0]-Q[0])/.05*lead,-lm,lm), ly=clamp((P[1]-Q[1])/.05*lead,-lm,lm), kl=1-Math.exp(-el/35);
   if(r.lx==null){r.lx=lx;r.ly=ly}else{r.lx+=(lx-r.lx)*kl;r.ly+=(ly-r.ly)*kl}
   let x=P[0]+r.lx, y=P[1]+r.ly;
   if(flip){x=W-x;y=L-y}
@@ -3187,7 +3288,7 @@ function netTick(dt){
 }
 function hostTick(){
   const H=NET.hostG;
-  if(H.opp){const o=NET.peers.get(H.opp);if(!o||(o.s&&o.s.r!=='g')){H.opp=null;NET.oppPeer=null;sfx.ui('leave');if(H.st!=='wait'){H.st='wait';toWaitRoom('対戦相手が退出しました')}}}
+  if(H.opp){const o=NET.peers.get(H.opp);if(!o||(o.s&&o.s.r!=='g')){H.opp=null;NET.oppPeer=null;sfx.ui('leave');if(H.st!=='wait'&&!PT.on){H.st='wait';toWaitRoom('対戦相手が退出しました')}}}
   if(!H.opp){let best=null;NET.peers.forEach(r=>{if(r.s&&r.s.r==='g'&&(!best||r.first<best.first))best=r});if(best){H.opp=best.id;sfx.ui('join');toast(`${nm(best)} が入室しました`)}}
   NET.oppPeer=H.opp?NET.peers.get(H.opp)||null:null;
 }
@@ -3204,10 +3305,11 @@ function guestTick(now){
   NET.specOpp=typeof g.opp==='string'?NET.peers.get(g.opp)||null:null;
   NET.oppPeer=(NET.isPlayer&&inMatch())||NET.isPlayerNow?hp:null;
   const gid=num(g.gid,-2)|0;
-  if(g.st==='play'&&gid!==NET.curGid) startOnline(gid);
+  if(g.st==='play'&&gid!==NET.curGid){if(g.pc&&!isClassic(cleanCfg(g.pc))&&Array.isArray(g.ro))startParty(gid,{pc:g.pc,ro:g.ro,t0:g.t0});else startOnline(gid)}
   else if(g.st==='wait'&&inMatch()) toWaitRoom('ホストが待機室に戻りました');
 }
 function consumeStates(now){
+  if(PT.on){paConsume(now);return}
   if(!inMatch()) return;
   if(!NET.isPlayer){specConsume(now);return}
   const o=NET.oppPeer; if(!o||!o.s||!o.fresh) return;
@@ -3246,10 +3348,12 @@ function youNow(now){ // 送る瞬間の自分のマレット（次の描画を�
   return [you.x+dx,you.y+dy];
 }
 function publishTick(now){
-  if(now-NET.pubT<9) return; NET.pubT=now;
+  if(now-NET.pubT<(PT.on?PT.sendIv-1:9)) return; NET.pubT=now;
   const S={id:NET.id,n:myName(),r:NET.role,q:++NET.seq,t:Math.round(now)};
-  if(NET.role==='h'){const H=NET.hostG;S.g={gid:H.gid,st:H.st,opp:H.opp,win:WIN};S.sv=NET.srv?NET.srv.name:''}
-  if(inMatch()&&NET.isPlayer){
+  if(NET.role==='h'){const H=NET.hostG;S.g={gid:H.gid,st:H.st,opp:H.opp,win:WIN,pc:PT.on?PT.cfg:cleanCfg(PCFG)};S.sv=NET.srv?NET.srv.name:'';if(!PT.on)S.g.lr=lobbyRoster(PCFG,false)}
+  else if(PT.req===0||PT.req===1) S.tm=PT.req;
+  if(PT.on){paFill(S,now)}
+  else if(inMatch()&&NET.isPlayer){
     const g=NET.role==='g';
     const yp=youNow(now); S.m=[r3(g?W-yp[0]:yp[0]),r3(g?L-yp[1]:yp[1]),r3(g?-youVs.x:youVs.x),r3(g?-youVs.y:youVs.y)]; S.pa=Math.round(now-physT);
     S.c=NET.conceded; S.cg=NET.curGid; S.pg=NET.curGid; S.sk=skinArr(skin);
@@ -3271,10 +3375,654 @@ function bgClock(on){
   catch(e){bgW=null}
 }
 
+/* =====================================================================
+   パーティー：トリオ（三角のリンク・3人）／チーム（2vs2〜5vs5）／マップ12種
+   ・どの端末も同じ「世界座標」でリンクを持ち、自分のゴールが手前（下）に来るように回して描く
+   ・パックは最後に触った人が計算役。自分のマレットが触れた瞬間に引き取るので、自分の打球は遅延なし
+   ・得点・時間・CPU はホストが決めて配る
+   ===================================================================== */
+let PCFG={m:'duo',n:2,map:0,cpu:true};
+try{const s=JSON.parse(localStorage.getItem('ah-party')||'{}');if(['duo','trio','team'].includes(s.m))PCFG.m=s.m;if(s.n>=2&&s.n<=5)PCFG.n=s.n|0;if(s.map>=0&&s.map<12)PCFG.map=s.map|0;if(typeof s.cpu==='boolean')PCFG.cpu=s.cpu}catch(e){}
+const savePCFG=()=>{try{localStorage.setItem('ah-party',JSON.stringify(PCFG))}catch(e){}};
+const cleanCfg=c=>{c=c&&typeof c==='object'?c:{};return{m:['duo','trio','team'].includes(c.m)?c.m:'duo',n:clamp(num(c.n,2)|0,2,5),map:clamp(num(c.map,0)|0,0,11),cpu:c.cpu!==false}};
+const isClassic=c=>!c||(c.m==='duo'&&c.map===0);
+const capOf=c=>c.m==='trio'?3:c.m==='team'?c.n*2:2;
+const modeLabel=c=>c.m==='team'?`チーム ${c.n}vs${c.n}`:c.m==='trio'?'トリオ':'1vs1';
+const modeEn=c=>c.m==='team'?`TEAM ${c.n}VS${c.n}`:c.m==='trio'?'TRIO':'1VS1';
+const SIDEC=[{c:'#ee4631',d:'#861a10',l:'#ff9c84',jp:'赤',en:'RED'},{c:'#3a7ff0',d:'#102f6e',l:'#93bdff',jp:'青',en:'BLUE'},{c:'#2fbf8f',d:'#0d5a40',l:'#8fe8c7',jp:'緑',en:'GREEN'}];
+// チームの人数ごとの大きさ：リンク（F）・パック（P）・マレット（M）。2vs2 で 1.5 倍、そこから少しずつ広げる
+const TEAM_SC={1:{F:1,P:1,M:1},2:{F:1.5,P:1.5,M:1.3},3:{F:1.75,P:1.65,M:1.42},4:{F:2,P:1.8,M:1.55},5:{F:2.25,P:1.95,M:1.68}};
+const TRIO_SC={F:1.05,P:1.65,M:1.45};
+/* マップ：見た目（th）・物理（ph）・障害物や仕掛け（ob） */
+const MAPS=[
+ {id:'classic',name:'クラシック',en:'CLASSIC',desc:'いつものリンク。障害物なし',
+  th:{bg:'#0b0d10',f0:'#eef2f5',f1:'#dfe6ec',dot:'rgba(30,40,55,.09)',line:'#c3ced8',rail:'#1d2229',rh:'#3a424d',goal:'#07080a'}},
+ {id:'neon',name:'ネオンシティ',en:'NEON CITY',desc:'夜の街。少し速いパック',ph:{pmax:1.1,drag:.8},
+  th:{bg:'#04050b',f0:'#0d1226',f1:'#090c1a',grid:'rgba(47,211,255,.16)',line:'#2fd3ff',rail:'#0d1126',rh:'#ff3df2',goal:'#020208',glow:1,dark:1}},
+ {id:'ice',name:'アイスリンク',en:'ICE RINK',desc:'よく滑る氷。止まらないので速攻向き',ph:{drag:.3,ew:1.07,pmax:1.15},cr:1.6,
+  th:{bg:'#071521',f0:'#f3fbff',f1:'#d4eafa',dot:'rgba(110,165,210,.12)',line:'#8cc8f0',rail:'#9fc6e2',rh:'#ffffff',goal:'#0b2234',ice:1}},
+ {id:'desert',name:'デザート',en:'DESERT',desc:'砂でブレーキがかかる。じっくり狙う',ph:{drag:2.3,pmax:.85},
+  th:{bg:'#140d06',f0:'#efd29a',f1:'#d9b273',dot:'rgba(120,80,30,.14)',line:'#b06a2c',rail:'#6d4a26',rh:'#b08550',goal:'#1d1207',sand:1}},
+ {id:'bumper',name:'バンパー',en:'BUMPERS',desc:'当たると加速するバンパーつき',
+  th:{bg:'#0d0913',f0:'#f6efff',f1:'#e6d8fb',dot:'rgba(110,70,160,.1)',line:'#b48ce8',rail:'#2a1d3a',rh:'#ff4fa0',goal:'#0b0710'},
+  ob:{bump:{r:.065,rect:[[0,0,1.2],[.62,0,.9],[-.62,0,.9]],tri:[[0,0,1.2],[.62,150,.9]]}}},
+ {id:'pillars',name:'ピラーズ',en:'PILLARS',desc:'柱を使った跳ね返しで決める',
+  th:{bg:'#0a0f0b',f0:'#edf2ec',f1:'#d6e0d4',dot:'rgba(50,80,50,.1)',line:'#7a9a7a',rail:'#26302a',rh:'#7f9f82',goal:'#060906'},
+  ob:{pillar:{r:.036,rect:[[.42,.22],[-.42,.22],[.78,0],[-.78,0]],tri:[[.56,150],[.32,90]]}}},
+ {id:'diamond',name:'ダイヤモンド',en:'DIAMOND',desc:'真ん中に大きなダイヤ。まっすぐは通らない',
+  th:{bg:'#090a12',f0:'#f1f3f8',f1:'#dde1ee',dot:'rgba(60,70,130,.1)',line:'#6c7bd8',rail:'#20243a',rh:'#8fa0ff',goal:'#05060c'},
+  ob:{gem:{r:.17}}},
+ {id:'wide',name:'ワイドゴール',en:'WIDE GOALS',desc:'ゴールが1.4倍。点がどんどん入る',ph:{gw:1.4},
+  th:{bg:'#120c04',f0:'#fff7e4',f1:'#ffe7b8',dot:'rgba(150,100,20,.1)',line:'#e0a422',rail:'#3a2a10',rh:'#f4c534',goal:'#120c04'}},
+ {id:'hole',name:'ブラックホール',en:'BLACK HOLE',desc:'中心に吸い寄せられて曲がるパック',ph:{hole:1},
+  th:{bg:'#030208',f0:'#151131',f1:'#0b0920',stars:1,line:'#7c5cff',rail:'#1a163a',rh:'#7c5cff',goal:'#020106',dark:1,glow:1}},
+ {id:'boost',name:'ブーストレーン',en:'BOOST LANES',desc:'矢印の上を通ると一気に加速',
+  th:{bg:'#08090b',f0:'#22262d',f1:'#1a1d23',lane:1,line:'#3ddc97',rail:'#2f333a',rh:'#3ddc97',goal:'#050607',dark:1,glow:1},
+  ob:{pad:{r:.1,rect:[[-.52,0,0,-1]],tri:[[.5,150,1]]}}},
+ {id:'portal',name:'ポータル',en:'PORTALS',desc:'入るともう一方から出てくるワープ',
+  th:{bg:'#070a12',f0:'#eef3ff',f1:'#d8e2fb',dot:'rgba(40,70,140,.1)',line:'#ff8a3d',rail:'#1f2a44',rh:'#3a7ff0',goal:'#04060c'},
+  ob:{portal:{r:.065,rect:[[-.7,0],[.7,0]],tri:[[.62,150]]}}},
+ {id:'movers',name:'ムービングウォール',en:'MOVING WALLS',desc:'動き続けるバンパーをかわして打つ',
+  th:{bg:'#0b0b0b',f0:'#eef0f2',f1:'#dde2e6',dot:'rgba(40,40,40,.08)',line:'#e0a422',rail:'#2a2a2a',rh:'#f4c534',goal:'#060606',hazard:1},
+  ob:{mover:{r:.065,amp:.56,w:1.25,rect:[[0,-.2]],tri:[[.46,90]]}}},
+];
+/* ---- 図形の小道具 ---- */
+const v2={sub:(a,b)=>[a[0]-b[0],a[1]-b[1]],add:(a,b)=>[a[0]+b[0],a[1]+b[1]],mul:(a,k)=>[a[0]*k,a[1]*k],dot:(a,b)=>a[0]*b[0]+a[1]*b[1],len:a=>Math.hypot(a[0],a[1]),
+  nrm:a=>{const l=Math.hypot(a[0],a[1])||1;return[a[0]/l,a[1]/l]},rot:(a,t)=>[a[0]*Math.cos(t)-a[1]*Math.sin(t),a[0]*Math.sin(t)+a[1]*Math.cos(t)]};
+function roundPoly(V,r,seg){ // 凸多角形の角を半径 r の円弧（seg 分割）で丸める
+  const out=[], n=V.length;
+  for(let i=0;i<n;i++){
+    const v=V[i], a=v2.nrm(v2.sub(V[(i-1+n)%n],v)), b=v2.nrm(v2.sub(V[(i+1)%n],v)), phi=Math.acos(clamp(v2.dot(a,b),-1,1));
+    const t=r/Math.tan(phi/2), p1=v2.add(v,v2.mul(a,t)), p2=v2.add(v,v2.mul(b,t)), c=v2.add(v,v2.mul(v2.nrm(v2.add(a,b)),r/Math.sin(phi/2)));
+    const a1=Math.atan2(p1[1]-c[1],p1[0]-c[0]); let da=Math.atan2(p2[1]-c[1],p2[0]-c[0])-a1; while(da>Math.PI)da-=TAU; while(da<-Math.PI)da+=TAU;
+    for(let k=0;k<=seg;k++){const an=a1+da*k/seg;out.push([c[0]+Math.cos(an)*r,c[1]+Math.sin(an)*r])}
+  }
+  return out;
+}
+function halfPlanes(P,k){ // 凸多角形 → 内向きの半平面（n·p >= d）
+  let cx=0,cy=0;P.forEach(p=>{cx+=p[0];cy+=p[1]});cx/=P.length;cy/=P.length;const out=[];
+  for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length],e=v2.sub(b,a),l=v2.len(e);if(l<1e-6)continue;let n=[-e[1]/l,e[0]/l];if(n[0]*(cx-a[0])+n[1]*(cy-a[1])<0)n=[-n[0],-n[1]];out.push({n,d:v2.dot(n,a),k:k==null?1:k})}
+  return out;
+}
+function clipHP(P,n,d){const out=[];for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length],da=v2.dot(n,a)-d,db=v2.dot(n,b)-d;if(da>=0)out.push(a);if((da>=0)!==(db>=0)){const t=da/(da-db);out.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t])}}return out}
+function inHP(p,H,m){for(const h of H)if(h.n[0]*p[0]+h.n[1]*p[1]-h.d<(m||0))return false;return true}
+function clampHP(p,H,m){ // 半平面の内側（余白 m×k）へ押し戻す
+  for(let it=0;it<4;it++){let mv=false;for(const h of H){const s=h.n[0]*p[0]+h.n[1]*p[1]-h.d-m*h.k;if(s<0){p[0]-=h.n[0]*s;p[1]-=h.n[1]*s;mv=true}}if(!mv)break}
+  return p;
+}
+function closestSeg(p,a,b){const e=v2.sub(b,a),l2=v2.dot(e,e)||1e-9,t=clamp(v2.dot(v2.sub(p,a),e)/l2,0,1);return[a[0]+e[0]*t,a[1]+e[1]*t]}
+/* ---- リンクを作る（モード・人数・マップから） ---- */
+function buildArena(cfg){
+  cfg=cleanCfg(cfg); const mode=cfg.m, per=mode==='team'?cfg.n:1, M=MAPS[cfg.map]||MAPS[0], ph=M.ph||{};
+  const sc=mode==='trio'?TRIO_SC:TEAM_SC[per], tri=mode==='trio';
+  const A={cfg,mode,tri,sides:tri?3:2,per,map:M,th:M.th,F:sc.F,pr:PR*sc.P,mr:MR*sc.M,t0:0};
+  A.drag=DRAG*(ph.drag||1); A.pmax=PMAX*Math.sqrt(sc.F)*(ph.pmax||1); A.ew=Math.min(.97,E_W*(ph.ew||1)); A.vc=VC*Math.sqrt(sc.F); A.vmax=YOU_VMAX*Math.pow(sc.F,.85);
+  const gw=G*(tri?1.4:1)*sc.F*(ph.gw||1); A.hw=gw/2;
+  let V, fr;
+  if(tri){
+    const s=1.9*sc.F, R=s/Math.sqrt(3); A.C=[0,0]; A.R=s/(2*Math.sqrt(3)); A.s=s; fr=.3*sc.F*(M.cr||1);
+    V=[0,1,2].map(i=>{const a=(90+120*i+60)*Math.PI/180;return[Math.cos(a)*R,Math.sin(a)*R]});
+    A.goals=[0,1,2].map(i=>{const a=(90+120*i)*Math.PI/180,o=[Math.cos(a),Math.sin(a)];return{side:i,c:v2.mul(o,A.R),n:[-o[0],-o[1]],t:[-o[1],o[0]]}});
+  }else{
+    const Wd=W*sc.F, Ld=L*sc.F; A.Wd=Wd; A.Ld=Ld; A.C=[Wd/2,Ld/2]; A.R=Wd/2; fr=CR*sc.F*(M.cr||1);
+    V=[[0,0],[Wd,0],[Wd,Ld],[0,Ld]];
+    A.goals=[{side:0,c:[Wd/2,Ld],n:[0,-1],t:[1,0]},{side:1,c:[Wd/2,0],n:[0,1],t:[1,0]}];
+  }
+  A.poly=roundPoly(V,fr,7); A.hp=halfPlanes(A.poly,1);
+  // 壁＝輪郭の線分からゴール口を抜いたもの（ゴール口の両端がポスト）
+  A.walls=[];
+  for(let i=0;i<A.poly.length;i++){
+    const a=A.poly[i], b=A.poly[(i+1)%A.poly.length]; if(v2.len(v2.sub(b,a))<1e-7) continue;
+    const g=A.goals.find(g=>Math.abs(v2.dot(v2.sub(a,g.c),g.n))<1e-6&&Math.abs(v2.dot(v2.sub(b,g.c),g.n))<1e-6);
+    if(!g){A.walls.push([a,b]);continue}
+    const ta=v2.dot(v2.sub(a,g.c),g.t), tb=v2.dot(v2.sub(b,g.c),g.t), lo=Math.min(ta,tb), hi=Math.max(ta,tb), P=t=>v2.add(g.c,v2.mul(g.t,t));
+    if(lo<-A.hw) A.walls.push([P(lo),P(Math.min(hi,-A.hw))]);
+    if(hi>A.hw) A.walls.push([P(Math.max(lo,A.hw)),P(hi)]);
+  }
+  A.goals.forEach(g=>{g.a=v2.add(g.c,v2.mul(g.t,-A.hw));g.b=v2.add(g.c,v2.mul(g.t,A.hw))});
+  // 各サイドの守備範囲（自分のゴール側の領域）。境界線は相手側へマレット半径の 0.65 だけはみ出せる
+  A.zones=A.goals.map(g=>{
+    let div;
+    if(tri){const th=Math.atan2(-g.n[1],-g.n[0]);div=[-1,1].map(sg=>{const a=th+sg*Math.PI/3,dir=[Math.cos(a),Math.sin(a)];let n=[-dir[1],dir[0]];if(v2.dot(n,[-g.n[0],-g.n[1]])<0)n=[-n[0],-n[1]];return{n,d:v2.dot(n,A.C),k:.35}})}
+    else div=[{n:[-g.n[0],-g.n[1]],d:v2.dot([-g.n[0],-g.n[1]],A.C),k:.35}];
+    let P=A.poly; div.forEach(h=>{P=clipHP(P,h.n,h.d)});
+    return{hp:A.hp.concat(div),poly:P};
+  });
+  // チーム戦はゴール前に入れない半円（ゴール前を壁で埋めて守れないように）
+  A.crease=mode==='team'?A.goals.map(g=>({x:g.c[0],y:g.c[1],r:A.hw*1.05})):null;
+  // サーブ位置・CPU の持ち場
+  A.serve=A.goals.map(g=>v2.add(A.C,v2.mul(v2.sub(g.c,A.C),.42)));
+  const dep=tri?.32*A.R:.2*A.Ld/2;
+  A.homes=A.goals.map(g=>{const out=[];for(let k=0;k<per;k++){const lat=(k-(per-1)/2)*Math.min(.34*sc.F,(tri?A.s:A.Wd)*.8/Math.max(1,per));out.push(v2.add(v2.add(g.c,v2.mul(g.n,dep+(A.crease?A.crease[0].r*.6:0))),v2.mul(g.t,lat)))}return out});
+  // 画面の回転：そのサイドのゴールが手前（下）に来る向き
+  A.rot=A.goals.map(g=>-Math.PI/2-Math.atan2(g.n[1],g.n[0]));
+  buildObstacles(A);
+  return A;
+}
+function symPts(A,spec){ // マップの配置を対称にコピー（長方形＝180°回転、三角＝120°ずつ）
+  const out=[], add=(p,extra)=>{if(!out.some(q=>Math.hypot(q.p[0]-p[0],q.p[1]-p[1])<1e-6))out.push({p,extra})};
+  if(A.tri) for(const s of spec.tri||[]) for(let i=0;i<3;i++){const a=(s[1]+120*i)*Math.PI/180;add([A.C[0]+Math.cos(a)*s[0]*A.R,A.C[1]+Math.sin(a)*s[0]*A.R],{s,i,a})}
+  else for(const s of spec.rect||[]){add([A.C[0]+s[0]*A.Wd/2,A.C[1]+s[1]*A.Ld/2],{s,i:0});add([A.C[0]-s[0]*A.Wd/2,A.C[1]-s[1]*A.Ld/2],{s,i:1})}
+  return out;
+}
+function buildObstacles(A){
+  const ob=A.map.ob||{}, F=A.F; A.circ=[]; A.polys=[]; A.pads=[]; A.portals=[]; A.movers=[]; A.hole=null;
+  if(ob.bump) symPts(A,ob.bump).forEach(({p,extra})=>A.circ.push({x:p[0],y:p[1],r:ob.bump.r*F*(extra.s[2]||1),kind:'bump'}));
+  if(ob.pillar) symPts(A,ob.pillar).forEach(({p})=>A.circ.push({x:p[0],y:p[1],r:ob.pillar.r*F,kind:'pillar'}));
+  if(ob.gem){const r=ob.gem.r*F*(A.tri?1.15:1);let pts;
+    if(A.tri) pts=[0,1,2].map(i=>{const a=(270+120*i)*Math.PI/180;return[A.C[0]+Math.cos(a)*r,A.C[1]+Math.sin(a)*r]});
+    else pts=[[A.C[0],A.C[1]-r*1.25],[A.C[0]+r,A.C[1]],[A.C[0],A.C[1]+r*1.25],[A.C[0]-r,A.C[1]]];
+    pts=roundPoly(pts,r*.12,3); A.polys.push({pts,hp:halfPlanes(pts,1),kind:'gem'})}
+  if(ob.pad) symPts(A,ob.pad).forEach(({p,extra})=>{let d;
+    if(A.tri){const a=extra.a+(extra.s[2]>0?Math.PI/2:-Math.PI/2);d=[Math.cos(a),Math.sin(a)]}
+    else{d=[extra.s[2],extra.s[3]];if(extra.i)d=[-d[0],-d[1]]}
+    A.pads.push({x:p[0],y:p[1],r:ob.pad.r*F,dx:d[0],dy:d[1]})});
+  if(ob.portal){const P=symPts(A,ob.portal);P.forEach(({p},i)=>A.portals.push({x:p[0],y:p[1],r:ob.portal.r*F,to:A.tri?(i+1)%P.length:1-i}))}
+  if(ob.mover){const o=ob.mover;
+    if(A.tri) for(let i=0;i<3;i++) A.movers.push({r:o.r*F,f:t=>{const a=(o.tri[0][1]+120*i)*Math.PI/180+t*o.w*.6;return[A.C[0]+Math.cos(a)*o.tri[0][0]*A.R,A.C[1]+Math.sin(a)*o.tri[0][0]*A.R]}});
+    else [1,-1].forEach(sg=>A.movers.push({r:o.r*F,f:t=>[A.C[0]+sg*o.amp*A.Wd/2*Math.sin(t*o.w),A.C[1]+sg*o.rect[0][1]*A.Ld/2]}))}
+  if((A.map.ph||{}).hole) A.hole={x:A.C[0],y:A.C[1],R:(A.tri?1.05:.62)*A.R,str:1.5*F,core:.06*F};
+}
+
+/* ---- パーティーの試合の状態 ---- */
+const PT={on:false,cfg:null,A:null,gid:-1,ms:[],me:-1,side:0,ph:'cd',pt:0,t0:0,sc:[0,0],win:7,
+  own:false,ep:0,epMax:0,ownId:null,lastBy:-1,hc:0,hcSeen:{},err:[0,0],gseq:0,grep:null,goalHold:false,seenGq:0,pcd:0,
+  hostOff:0,rtt:{},req:null,sendIv:10,rxq:{},trail:[],bst:{},tick:0,lastOwnRx:0,over:false};
+const HG={ph:'cd',pt:0,t0:0,sc:[],gq:0,lg:null,ro:[],done:new Set(),serveSide:0,winner:-1}; // ホストだけが使う
+function paNow(){return performance.now()}
+function paHostClock(now){return NET.role==='h'?now:now-PT.hostOff} // ホストの時計に直した時刻
+function paTime(now){return Math.max(0,(paHostClock(now)-PT.t0)/1000)} // 試合開始からの秒（動く壁の位置に使う）
+/* ---- ロビー：参加者の並びと所属（ホストが決める） ---- */
+function lobbyHumans(){
+  const hs=[{id:NET.id,first:-1,req:PT.req}];
+  NET.peers.forEach(r=>{if(r.s&&r.s.r==='g')hs.push({id:r.id,first:r.first,req:(r.s.tm===0||r.s.tm===1)?r.s.tm:null})});
+  hs.sort((a,b)=>a.first-b.first); return hs;
+}
+function lobbyRoster(cfg,withBots){
+  cfg=cleanCfg(cfg); const cap=capOf(cfg), hs=lobbyHumans().slice(0,cap), ro=[];
+  if(cfg.m==='team'){const cnt=[0,0];
+    hs.forEach(h=>{let s=h.req!=null?h.req:(cnt[0]<=cnt[1]?0:1);if(cnt[s]>=cfg.n)s=1-s;cnt[s]++;ro.push([h.id,s])});
+    if(withBots&&cfg.cpu){let b=0;for(const s of [0,1])while(cnt[s]<cfg.n){ro.push(['#'+(b++),s]);cnt[s]++}}}
+  else{const sides=cfg.m==='trio'?3:2;hs.forEach((h,i)=>ro.push([h.id,i]));if(withBots&&cfg.cpu){let b=0;for(let s=hs.length;s<sides;s++)ro.push(['#'+(b++),s])}}
+  return ro;
+}
+/* ---- 試合の開始・終了 ---- */
+function hostStartParty(){
+  const H=NET.hostG, cfg=cleanCfg(PCFG), ro=lobbyRoster(cfg,true), humans=ro.filter(r=>r[0][0]!=='#').length;
+  if(ro.length<capOf(cfg)){toast(`${modeLabel(cfg)}は${capOf(cfg)}人必要です。「空いた枠はCPU」をオンにすると今すぐ始められます`);return}
+  if(humans<1) return;
+  H.gid++; H.st='play'; H.pc=cfg; H.ro=ro;
+  startParty(H.gid,{pc:cfg,ro,t0:performance.now()}); lobbyAnnounce();
+}
+function startParty(gid,g){
+  const cfg=cleanCfg(g.pc), A=buildArena(cfg), now=performance.now();
+  Object.assign(PT,{on:true,cfg,A,gid,ph:'cd',pt:now,t0:num(g.t0,now),sc:new Array(A.sides).fill(0),own:false,ep:0,epMax:0,ownId:null,lastBy:-1,hc:0,hcSeen:{},err:[0,0],gseq:0,grep:null,goalHold:false,seenGq:0,trail:[],bst:{},rxq:{},over:false,lastOwnRx:now});
+  NET.curGid=gid; NET.overT=0; WIN=PT.win;
+  const cnt=new Array(A.sides).fill(0);
+  PT.ms=(g.ro||[]).map(([id,side],i)=>{const k=cnt[side]++,h=A.homes[side][Math.min(k,A.per-1)];return{i,id,side,k,bot:id[0]==='#',x:h[0],y:h[1],vx:0,vy:0,ox:h[0],oy:h[1],sx:h[0],sy:h[1],tx:h[0],ty:h[1],st:{},ai:{t:0,aim:0}}});
+  PT.me=PT.ms.findIndex(m=>m.id===NET.id); PT.side=PT.me>=0?PT.ms[PT.me].side:0; NET.isPlayer=PT.me>=0;
+  const n=PT.ms.length; PT.sendIv=n>6?22:n>4?15:10;
+  const s0=A.serve[gid%A.sides]; puck.x=s0[0];puck.y=s0[1];puck.vx=puck.vy=puck.w=0;puck.a=0;puck.sup=false;PK=1;
+  if(PT.me>=0){const m=PT.ms[PT.me];target.x=m.x;target.y=m.y}
+  if(NET.role==='h'){Object.assign(HG,{ph:'cd',pt:now,t0:PT.t0,sc:new Array(A.sides).fill(0),gq:0,lg:null,ro:g.ro,done:new Set(),serveSide:gid%A.sides,winner:-1});PT.own=true;PT.ep=PT.epMax=1;PT.ownId=NET.id}
+  resetMatchUI(); rings.length=0; sparks.length=0; trail.length=0; superTrail=null; if(bt.on){bt.on=false;sfx.drone(false);bgm.duck(false)} stopCine();
+  state='play'; document.body.classList.add('party'); r3Apply(); fxApply(); paLayout(true); paHud(true);
+  sfx.init(); sfx.resume(); sfx.air(true); last=performance.now();
+  sweep(()=>{closeUI();if(PT.me<0)toast(`観戦中：${modeLabel(cfg)}・${A.map.name}`)});
+}
+function paStop(){
+  if(!PT.on) return; PT.on=false; PT.own=false; document.body.classList.remove('party'); paHud(false);
+  rings.length=0; sparks.length=0; resetPositions(); r3Apply(); fxApply(); resize();
+}
+/* ---- マレット：自分（指の位置へ）・他の人（届いた位置を補間）・CPU（ホストが動かす） ---- */
+function paClampM(m,x,y){
+  const A=PT.A, p=[x,y]; clampHP(p,A.zones[m.side].hp,A.mr);
+  if(A.crease){const c=A.crease[m.side],dx=p[0]-c.x,dy=p[1]-c.y,d=Math.hypot(dx,dy),R=c.r+A.mr;if(d<R){const g=A.goals[m.side];let nx=dx/(d||1),ny=dy/(d||1);if(d<1e-6){nx=g.n[0];ny=g.n[1]}p[0]=c.x+nx*R;p[1]=c.y+ny*R}}
+  for(const o of A.circ){const dx=p[0]-o.x,dy=p[1]-o.y,d=Math.hypot(dx,dy),R=o.r+A.mr;if(d<R){p[0]=o.x+dx/(d||1)*R;p[1]=o.y+dy/(d||1)*R}}
+  for(const o of A.polys){const q=paClosestPoly(p,o.pts),inside=inHP(p,o.hp,0),dx=p[0]-q[0],dy=p[1]-q[1],d=Math.hypot(dx,dy);
+    if(inside||d<A.mr){const sg=inside?-1:1,nx=sg*dx/(d||1),ny=sg*dy/(d||1);p[0]=q[0]+nx*A.mr;p[1]=q[1]+ny*A.mr}}
+  clampHP(p,A.zones[m.side].hp,A.mr);
+  return p;
+}
+function paClosestPoly(p,pts){let best=null,bd=1e9;for(let i=0;i<pts.length;i++){const q=closestSeg(p,pts[i],pts[(i+1)%pts.length]),d=Math.hypot(p[0]-q[0],p[1]-q[1]);if(d<bd){bd=d;best=q}}return best}
+function paSeparate(m,move){ // ほかのマレットと重ならない（自分のマレットだけ／ホストのCPUだけを動かす）
+  const A=PT.A, R=A.mr*2;
+  for(const o of PT.ms){if(o===m)continue;let dx=m.x-o.x,dy=m.y-o.y,d=Math.hypot(dx,dy);if(d<R){if(d<1e-6){dx=Math.cos(m.i);dy=Math.sin(m.i);d=1}const k=(R-d)*(move?1:.5)/d;m.x+=dx*k;m.y+=dy*k}}
+}
+function paMoveMe(m,dt){
+  const A=PT.A, t=paClampM(m,target.x,target.y); let dx=t[0]-m.x, dy=t[1]-m.y; const d=Math.hypot(dx,dy), md=A.vmax*dt;
+  if(d>md){dx*=md/d;dy*=md/d}
+  m.x+=dx; m.y+=dy; paSeparate(m,true); const c=paClampM(m,m.x,m.y); m.x=c[0]; m.y=c[1];
+}
+function paBotThink(m){
+  const A=PT.A, g=A.goals[m.side], P=[puck.x,puck.y], V=[puck.vx,puck.vy], F=A.F;
+  const inMy=inHP(P,A.zones[m.side].hp,-A.pr), dM=Math.hypot(m.x-P[0],m.y-P[1]);
+  let near=true; for(const o of PT.ms){if(o!==m&&o.side===m.side&&Math.hypot(o.x-P[0],o.y-P[1])<dM-.03*F){near=false;break}}
+  const toward=-v2.dot(V,g.n), depth=.12*F+(A.crease?A.crease[0].r:0)+A.mr;
+  if(m.ai.aimT===undefined||m.ai.aimT<=0){const opp=A.goals.filter(x=>x.side!==m.side);m.ai.aim=opp[(Math.random()*opp.length)|0].side;m.ai.aimT=2+Math.random()*2}
+  let tx,ty,boost=.62;
+  if(inMy&&near&&PT.ph==='play'){
+    const og=A.goals[m.ai.aim], aimP=v2.add(og.c,v2.mul(og.t,(Math.random()-.5)*A.hw*1.2)), dir=v2.nrm(v2.sub(aimP,P)), back=v2.sub(P,v2.mul(dir,(A.pr+A.mr)*1.15));
+    const rel=v2.dot([m.x-P[0],m.y-P[1]],dir);
+    if(rel<-(A.pr+A.mr)*.55&&Math.abs(v2.dot([m.x-P[0],m.y-P[1]],[-dir[1],dir[0]]))<A.mr*.9){tx=P[0]+dir[0]*.3*F;ty=P[1]+dir[1]*.3*F;boost=1} // 後ろに回れたら押し出す
+    else{const side=[-dir[1],dir[0]],s=v2.dot([m.x-P[0],m.y-P[1]],side)>0?1:-1;const via=rel>0?v2.add(back,v2.mul(side,s*(A.pr+A.mr)*1.3)):back;tx=via[0];ty=via[1];boost=.85}
+  }else if(toward>.25){
+    const s0=v2.dot(v2.sub(P,g.c),g.n), tc=Math.max(0,(s0-depth)/toward), xi=v2.add(P,v2.mul(V,Math.min(tc,1.2)));
+    const lat=clamp(v2.dot(v2.sub(xi,g.c),g.t)+(m.k-(A.per-1)/2)*A.mr*1.6,-A.hw*1.3,A.hw*1.3), p=v2.add(v2.add(g.c,v2.mul(g.n,depth)),v2.mul(g.t,lat)); tx=p[0];ty=p[1];boost=.9;
+  }else{const h=A.homes[m.side][Math.min(m.k,A.per-1)],lat=clamp(v2.dot(v2.sub(P,g.c),g.t)*.3,-A.hw,A.hw),p=v2.add(h,v2.mul(g.t,lat));tx=p[0];ty=p[1]}
+  m.tx=tx; m.ty=ty; m.ai.boost=boost;
+}
+function paBotStep(m,dt){
+  const A=PT.A; m.ai.t-=dt; m.ai.aimT-=dt; if(m.ai.t<=0){paBotThink(m);m.ai.t=.08+Math.random()*.08}
+  const t=paClampM(m,m.tx,m.ty), dx=t[0]-m.x, dy=t[1]-m.y, d=Math.hypot(dx,dy), vmax=A.vmax*.52*(m.ai.boost||.6), amax=42*A.F;
+  const sp=Math.min(vmax,Math.sqrt(2*amax*d)*.9), dvx=d>1e-5?dx/d*sp:0, dvy=d>1e-5?dy/d*sp:0;
+  let ax=(dvx-(m.bvx||0))/dt, ay=(dvy-(m.bvy||0))/dt; const a=Math.hypot(ax,ay); if(a>amax){ax*=amax/a;ay*=amax/a}
+  m.bvx=(m.bvx||0)+ax*dt; m.bvy=(m.bvy||0)+ay*dt; m.x+=m.bvx*dt; m.y+=m.bvy*dt; paSeparate(m,false);
+  const c=paClampM(m,m.x,m.y); m.x=c[0]; m.y=c[1];
+}
+/* ---- パック：計算役のときの物理（壁・障害物・仕掛け・全員のマレット） ---- */
+function paMovers(t){const A=PT.A;return A.movers.map(o=>{const p=o.f(t),q=o.f(t+.01);return{x:p[0],y:p[1],r:o.r,vx:(q[0]-p[0])/.01,vy:(q[1]-p[1])/.01,kind:'mover'}})}
+function paCircle(o,fx){ // 丸い障害物（バンパーは当たると弾き出す）
+  const A=PT.A, dx=puck.x-o.x, dy=puck.y-o.y, R=o.r+A.pr, d2=dx*dx+dy*dy; if(d2>=R*R) return;
+  const d=Math.sqrt(d2)||1e-6, nx=dx/d, ny=dy/d; puck.x=o.x+nx*R; puck.y=o.y+ny*R;
+  const J=impulse(nx,ny,o.vx||0,o.vy||0,o.kind==='bump'?.95:A.ew,MU_W);
+  if(o.kind==='bump'&&J>0){const vn=puck.vx*nx+puck.vy*ny,need=4.2*Math.sqrt(A.F);if(vn<need){puck.vx+=nx*(need-vn);puck.vy+=ny*(need-vn)}if(fx)paFx(o.x+nx*o.r,o.y+ny*o.r,nx,ny,.7,null,'#ff4fa0')}
+  else if(fx&&J>.3) paFx(puck.x-nx*A.pr,puck.y-ny*A.pr,nx,ny,Math.min(1,J/7)*.8,null,null);
+}
+function paPolyHit(o,fx){
+  const A=PT.A, p=[puck.x,puck.y], q=paClosestPoly(p,o.pts); let inside=true; for(const h of o.hp)if(h.n[0]*p[0]+h.n[1]*p[1]-h.d<0){inside=false;break}
+  const dx=p[0]-q[0], dy=p[1]-q[1], d=Math.hypot(dx,dy); if(!inside&&d>=A.pr) return;
+  let nx=dx/(d||1), ny=dy/(d||1); if(inside){nx=-nx;ny=-ny}
+  puck.x=q[0]+nx*A.pr; puck.y=q[1]+ny*A.pr; const J=impulse(nx,ny,0,0,A.ew,MU_W); if(fx&&J>.3) paFx(q[0],q[1],nx,ny,Math.min(1,J/7)*.8,null,null);
+}
+function paWalls(fx){
+  const A=PT.A; let best=0,bx=0,by=0,bnx=0,bny=0;
+  for(const w of A.walls){const q=closestSeg([puck.x,puck.y],w[0],w[1]),dx=puck.x-q[0],dy=puck.y-q[1],d2=dx*dx+dy*dy;if(d2>=A.pr*A.pr)continue;
+    const d=Math.sqrt(d2)||1e-6;let nx=dx/d,ny=dy/d;
+    if(d<1e-6){const e=v2.nrm(v2.sub(w[1],w[0]));nx=-e[1];ny=e[0];if(!inHP([q[0]+nx*.01,q[1]+ny*.01],A.hp,0)){nx=-nx;ny=-ny}}
+    puck.x=q[0]+nx*A.pr; puck.y=q[1]+ny*A.pr; const J=impulse(nx,ny,0,0,A.ew,MU_W); if(J>best){best=J;bx=q[0];by=q[1];bnx=nx;bny=ny}}
+  if(fx&&best>.25) paFx(bx,by,bnx,bny,Math.min(1,best/7)*.85,null,null);
+  // 壁を抜けたときの保険：ゴール口以外で外に出ていたら内側へ戻す
+  if(!inHP([puck.x,puck.y],A.hp,0)&&!paInMouth()){const p=clampHP([puck.x,puck.y],A.hp,A.pr);puck.x=p[0];puck.y=p[1]}
+}
+function paInMouth(){const A=PT.A;for(const g of A.goals){const l=v2.dot([puck.x-g.c[0],puck.y-g.c[1]],g.t);if(Math.abs(l)<A.hw&&v2.dot([puck.x-g.c[0],puck.y-g.c[1]],g.n)<A.pr*1.5)return g}return null}
+function paSpecials(h){
+  const A=PT.A;
+  if(A.hole){const o=A.hole,dx=o.x-puck.x,dy=o.y-puck.y,d=Math.hypot(dx,dy);if(d<o.R&&d>1e-4){const f=o.str*(1-d/o.R)/Math.max(d*d,.02);puck.vx+=dx/d*f*h;puck.vy+=dy/d*f*h;
+    if(d<o.core&&Math.hypot(puck.vx,puck.vy)<1.6){const a=Math.atan2(puck.vy,puck.vx)+2.3;puck.vx=Math.cos(a)*3.2*Math.sqrt(A.F);puck.vy=Math.sin(a)*3.2*Math.sqrt(A.F)}}} // 中心で止まらないよう吐き出す
+  for(const p of A.pads){const dx=puck.x-p.x,dy=puck.y-p.y;if(dx*dx+dy*dy<p.r*p.r){puck.vx+=p.dx*24*h*Math.sqrt(A.F);puck.vy+=p.dy*24*h*Math.sqrt(A.F);PT.padT=.25}}
+}
+function paPortals(fx){
+  const A=PT.A; if(!A.portals.length||(PT.portCd||0)>0) return;
+  for(const p of A.portals){const dx=puck.x-p.x,dy=puck.y-p.y;if(dx*dx+dy*dy<(p.r*.7)**2){const q=A.portals[p.to],sp=Math.hypot(puck.vx,puck.vy)||1,ux=puck.vx/sp,uy=puck.vy/sp;
+    puck.x=q.x+ux*(q.r+A.pr*.2);puck.y=q.y+uy*(q.r+A.pr*.2);PT.portCd=.35;if(fx){addRing(p.x,p.y,.9,'#ff8a3d');addRing(q.x,q.y,.9,'#3a7ff0');sfx.ui('pick',220)}break}}
+}
+function paIntegrate(h,t){
+  const A=PT.A, k=Math.exp(-A.drag*h); puck.vx*=k; puck.vy*=k; puck.w*=Math.exp(-SPIN_DRAG*h);
+  paSpecials(h); puck.x+=puck.vx*h; puck.y+=puck.vy*h; puck.a+=puck.w*h; if(PT.portCd>0)PT.portCd-=h;
+}
+function paCap(){const A=PT.A,lim=A.pmax*(PT.padT>0?1.25:1),sp=Math.hypot(puck.vx,puck.vy);if(sp>lim){puck.vx*=lim/sp;puck.vy*=lim/sp}puck.w=clamp(puck.w,-160,160)}
+function paGoalCheck(){const A=PT.A;for(const g of A.goals){const rel=[puck.x-g.c[0],puck.y-g.c[1]];if(v2.dot(rel,g.n)<-A.pr*1.05&&Math.abs(v2.dot(rel,g.t))<A.hw+A.pr)return g}return null}
+function paStep(h,t,owner){ // owner=true：マレットとの衝突と得点判定もする
+  const A=PT.A, fx=owner&&!QUIET;
+  paIntegrate(h,t);
+  if(owner) for(const m of PT.ms) paHitM(m,fx);
+  for(const o of A.circ) paCircle(o,fx);
+  if(A.movers.length) for(const o of paMovers(t)) paCircle(o,fx);
+  for(const o of A.polys) paPolyHit(o,fx);
+  paWalls(fx); paPortals(fx); paCap(); if(PT.padT>0)PT.padT-=h;
+  const g=paGoalCheck(); if(g){puck.vx*=.2;puck.vy*=.2; return g}
+  return null;
+}
+function paHitM(m,fx){
+  const A=PT.A, dx=puck.x-m.sx, dy=puck.y-m.sy, min=A.pr+A.mr, d2=dx*dx+dy*dy; if(d2>=min*min) return;
+  const d=Math.sqrt(d2)||1e-6, nx=dx/d, ny=dy/d; puck.x=m.sx+nx*min; puck.y=m.sy+ny*min;
+  const J=impulse(nx,ny,m.vx,m.vy,E_M,MU_M);
+  if(J>0){const sp=Math.hypot(puck.vx,puck.vy);if(sp>.01){const k=A.vc*Math.tanh(sp/A.vc)/sp;puck.vx*=k;puck.vy*=k}}
+  if(J>.12){PT.lastBy=m.i;if(J>.5)PT.hc++;
+    if(fx){const s=Math.min(1,J/7);paFx(puck.x-nx*A.pr,puck.y-ny*A.pr,nx,ny,s,m,null);
+      if(m.i===PT.me&&J>.8){const kmh=Math.round(Math.min(A.pmax,Math.hypot(puck.vx,puck.vy))*UNIT_M*3.6/Math.sqrt(A.F));if(kmh>stats.max)stats.max=kmh}}}
+}
+function paFx(x,y,nx,ny,s,m,col){ // 当たりの演出（リング・火花・音・振動）
+  if(QUIET) return;
+  addRing(x,y,s,col||(m?SIDEC[m.side].c:'#3b4b60'));
+  if(s>.42) addSparks(x,y,nx,ny,s);
+  sfx.hit(s,m?'mallet':'wall',m&&m.i===PT.me?'you':'cpu');
+  if(m&&m.i===PT.me){if(s>.3)buzz(8);if(s>.55)shake(s*.3)}
+}
+function paTouch(m){const A=PT.A,dx=puck.x-m.x,dy=puck.y-m.y,r=A.pr+A.mr;return dx*dx+dy*dy<r*r}
+/* ---- 1フレーム分の更新 ---- */
+function partyUpdate(dt){
+  if(!PT.on||!PT.A) return;
+  const A=PT.A, now=performance.now(), T=paTime(now);
+  if(NET.role==='h') paHostPhase(now);
+  if((PT.hudT=(PT.hudT||0)-dt)<=0){PT.hudT=.5;paHud()}
+  // マレット
+  for(const m of PT.ms){m.ox=m.x;m.oy=m.y}
+  for(const m of PT.ms){
+    if(m.i===PT.me){if(state==='play'||state==='goal')paMoveMe(m,dt)}
+    else if(m.bot||m.lost){if(NET.role==='h')paBotStep(m,dt);else{const p=paBotRead(m);if(p){const c=paClampM(m,p[0],p[1]);m.x=c[0];m.y=c[1]}}}
+    else{const r=NET.peers.get(m.id),p=r?remoteMallet(r,false):null;if(p){const c=paClampM(m,p[0],p[1]);if(Math.hypot(c[0]-m.x,c[1]-m.y)>.6*A.F){m.ox=c[0];m.oy=c[1]}m.x=c[0];m.y=c[1]}}
+  }
+  for(const m of PT.ms){m.vx=clamp((m.x-m.ox)/dt,-12*A.F,12*A.F);m.vy=clamp((m.y-m.oy)/dt,-12*A.F,12*A.F)}
+  // パック
+  const play=PT.ph==='play'&&!PT.goalHold;
+  if(play){
+    let maxMv=0; for(const m of PT.ms) maxMv=Math.max(maxMv,Math.hypot(m.x-m.ox,m.y-m.oy));
+    const pv=Math.hypot(puck.vx,puck.vy), n=Math.min(120,Math.max(Math.ceil(dt*480),Math.ceil((pv*dt+maxMv)/(A.pr*.3)))), h=dt/n, rr=(A.pr+A.mr)**2;
+    const touchAt=m=>{const dx=puck.x-m.sx,dy=puck.y-m.sy;return dx*dx+dy*dy<rr};
+    for(let i=1;i<=n;i++){
+      for(const m of PT.ms){m.sx=m.ox+(m.x-m.ox)*i/n;m.sy=m.oy+(m.y-m.oy)*i/n}
+      if(!PT.own){ // 触った瞬間に計算役を引き取る（自分の打球は遅延なし）。ホストは CPU が触ったときも引き取る
+        const mine=PT.me>=0&&touchAt(PT.ms[PT.me]), botT=NET.role==='h'&&PT.ms.some(m=>(m.bot||m.lost)&&touchAt(m));
+        if(mine||botT){PT.own=true;PT.ep=PT.epMax=Math.max(PT.ep,PT.epMax)+1;PT.ownId=NET.id;PT.err[0]=PT.err[1]=0}
+      }
+      const g=paStep(h,T-dt+dt*i/n,PT.own);
+      if(g){if(PT.own)paOwnGoal(g);else{puck.vx=puck.vy=0;PT.goalHold=true}break}
+    }
+    if(!PT.own){const k=1-Math.exp(-18*dt);puck.x+=PT.err[0]*k;puck.y+=PT.err[1]*k;PT.err[0]*=1-k;PT.err[1]*=1-k}
+  }else if(PT.goalHold){const k=Math.exp(-10*dt);puck.vx*=k;puck.vy*=k;puck.x+=puck.vx*dt;puck.y+=puck.vy*dt}
+  if(PT.ph==='play'||PT.ph==='goal'){PT.trail.push(puck.x,puck.y);if(PT.trail.length>20)PT.trail.splice(0,2)}else PT.trail.length=0;
+  // ゴールを知らせても認められないまま止まっているときの保険（2.5秒で再開）
+  if(PT.own&&PT.goalHold&&PT.ph==='play'&&PT.grep&&now-PT.grep.at>2500){const p=clampHP([puck.x,puck.y],A.hp,A.pr*1.2);puck.x=p[0];puck.y=p[1];puck.vx=puck.vy=0;PT.goalHold=false;PT.grep=null}
+  // 計算役がいなくなったらホストが引き取る
+  if(NET.role==='h'&&!PT.own&&PT.ph==='play'&&now-PT.lastOwnRx>700){PT.own=true;PT.ep=PT.epMax=Math.max(PT.ep,PT.epMax)+1;PT.ownId=NET.id}
+}
+function paOwnGoal(g){ // 計算役がゴールを見つけた：ホストへ知らせ、パックは止める
+  PT.goalHold=true; puck.vx*=.2; puck.vy*=.2;
+  PT.grep={q:++PT.gseq,side:g.side,by:PT.lastBy,ep:PT.ep,at:performance.now()};
+  if(NET.role==='h') paHostGoal(g.side,PT.lastBy,NET.id+':'+PT.grep.q);
+}
+/* ---- ホスト：段階（カウントダウン→試合→ゴール→サーブ→終了）と得点 ---- */
+function paHostPhase(now){
+  if(HG.ph==='cd'&&now-HG.pt>3000){HG.ph='play';HG.pt=now}
+  else if(HG.ph==='goal'&&now-HG.pt>1700){
+    if(HG.winner>=0){HG.ph='over';HG.pt=now;NET.hostG.st='over';lobbyAnnounce()}
+    else paServe(HG.serveSide);
+  }
+  PT.ph=HG.ph; PT.sc=HG.sc.slice();
+  // 抜けた人の枠は CPU が引き継ぐ
+  for(const m of PT.ms){if(!m.bot&&m.i!==PT.me&&!m.lost&&!NET.peers.has(m.id)){m.lost=true;toast('切断した人の枠を CPU が引き継ぎます')}}
+  paSeenGoal();
+}
+function paHostGoal(side,by,key){
+  if(HG.ph!=='play'||HG.done.has(key)) return; HG.done.add(key);
+  const A=PT.A, ms=PT.ms;
+  if(A.mode==='trio'){const bs=by>=0&&ms[by]?ms[by].side:-1;if(bs>=0&&bs!==side)HG.sc[bs]++;else for(let s=0;s<3;s++)if(s!==side)HG.sc[s]++}
+  else HG.sc[1-side]++;
+  HG.gq++; HG.lg=[side,by]; HG.ph='goal'; HG.pt=performance.now(); HG.serveSide=side;
+  const top=Math.max(...HG.sc); if(top>=PT.win){const w=HG.sc.indexOf(top);HG.winner=HG.sc.filter(v=>v===top).length>1?-1:w}
+  PT.ph='goal'; PT.sc=HG.sc.slice(); paSeenGoal();
+}
+function paServe(side){
+  const A=PT.A, s=A.serve[side]; HG.ph='play'; HG.pt=performance.now();
+  puck.x=s[0];puck.y=s[1];puck.vx=puck.vy=puck.w=0; PT.goalHold=false; PT.grep=null; PT.trail.length=0;
+  PT.own=true; PT.ep=PT.epMax=Math.max(PT.ep,PT.epMax)+1; PT.ownId=NET.id; PT.lastBy=-1; PT.err[0]=PT.err[1]=0;
+  addRing(s[0],s[1],1,COL.gold); sfx.ui('serve'); PT.ph='play';
+}
+function paSeenGoal(){ // 新しいゴール：演出・表示（全員）
+  const gq=NET.role==='h'?HG.gq:PT.gqR|0; if(gq<=PT.seenGq) return; PT.seenGq=gq;
+  const lg=NET.role==='h'?HG.lg:PT.lgR; if(!lg) return; const [side,by]=lg, A=PT.A;
+  const mine=PT.me>=0&&side===PT.side, scorer=by>=0&&PT.ms[by]?PT.ms[by]:null, own=scorer&&scorer.side===side;
+  const who=scorer?paName(scorer):'';
+  if(mine){sfx.goal(false);buzz([25,40,60]);banner(own?'OWN GOAL':'失点',SIDEC[side].c,!own)}
+  else{sfx.goal(true);if(scorer&&scorer.i===PT.me){buzz([20,30]);banner('GOAL!',COL.gold)}else banner(A.mode==='team'&&PT.me>=0&&scorer&&scorer.side===PT.side?'NICE!':'GOAL',SIDEC[scorer&&!own?scorer.side:side].c)}
+  if(who&&!mine) toast(own?`${who} のオウンゴール`:`${who} のゴール！`);
+  const g=A.goals[side]; addRing(g.c[0],g.c[1],1.4,SIDEC[side].c); shake(.6); PT.flash=1; PT.flashSide=side; paHud();
+  // 全員の画面で、決まったゴールの口にパックを置いて止める（計算役が入れ替わった直後でも表示がそろう）
+  puck.x=g.c[0]-g.n[0]*A.pr*1.25; puck.y=g.c[1]-g.n[1]*A.pr*1.25; puck.vx=puck.vy=0; PT.goalHold=true; PT.err[0]=PT.err[1]=0; PT.trail.length=0;
+}
+function paName(m){if(!m)return'';if(m.bot||m.lost)return`CPU ${SIDEC[m.side].jp}`+(PT.A.per>1?(m.k+1):'');if(m.i===PT.me)return myName()||'あなた';const r=NET.peers.get(m.id);return r?nm(r):'—'}
+function paOver(){
+  if(state==='over') return; state='over'; sfx.air(false); PT.over=true;
+  const A=PT.A, sc=PT.sc, top=Math.max(...sc), w=sc.indexOf(top), win=PT.me>=0&&sc[PT.side]===top;
+  sfx.end(win); if(win) sfx.cheer(2.2);
+  const order=sc.map((v,s)=>[v,s]).sort((a,b)=>b[0]-a[0]);
+  $('resEyebrow').textContent=`${modeEn(PT.cfg)} · ${A.map.en}`;
+  $('resTitle').textContent=PT.me<0?`${SIDEC[w].en} WIN`:win?(A.mode==='team'?'TEAM WIN':'YOU WIN'):(A.mode==='trio'&&order[1][1]===PT.side?'2ND PLACE':'YOU LOSE');
+  $('resTitle').style.color=win?'#ff8670':'#82b0ff';
+  const fin=$('pFinal'); fin.textContent=''; fin.hidden=false; document.querySelector('#s-over .final:not(.pfinal)').hidden=true;
+  order.forEach(([v,s],k)=>{if(k){const d=document.createElement('span');d.className='d';d.textContent='–';fin.appendChild(d)}const sp=document.createElement('span');sp.className='pn';sp.style.color=SIDEC[s].l;sp.textContent=v;fin.appendChild(sp)});
+  const rk=$('pRank'); rk.hidden=false; rk.textContent=order.map(([v,s],k)=>`${k+1}位 ${SIDEC[s].jp}（${PT.ms.filter(m=>m.side===s).map(paName).join('・')}）${v}点`).join('　');
+  document.querySelector('#s-over .stats').hidden=true; $('resStars').hidden=true; $('overNote').hidden=true;
+  overButtons(); scr.over.dataset.res=win?'win':'lose'; go('over',{noHist:true});
+}
+
+/* ---- 通信：送る中身・届いた状態の使い方 ---- */
+function paFill(S,now){
+  S.cg=PT.gid; S.sk=skinArr(skin);
+  if(PT.me>=0){const m=PT.ms[PT.me];S.m=[r3(m.x),r3(m.y),r3(m.vx),r3(m.vy)]}
+  if(PT.own) S.pp=[r3(puck.x),r3(puck.y),r3(puck.vx),r3(puck.vy),Math.round(puck.w*10)/10,Math.round(puck.a*100)/100,PT.ep,PT.lastBy,PT.hc,PT.goalHold?1:0];
+  if(PT.grep&&now-PT.grep.at<1500) S.pg=[PT.grep.q,PT.grep.side,PT.grep.by,PT.grep.ep];
+  if(NET.role!=='h'){const hp=NET.hostPeer;if(hp&&hp.s)S.ek={[hp.id]:[num(hp.s.t)|0,Math.round(now-hp.rx)]}}
+  else{const g=S.g;g.ro=HG.ro;g.ph=HG.ph;g.pt=Math.round(HG.pt);g.t0=Math.round(HG.t0);g.sc=HG.sc;g.gq=HG.gq;g.lg=HG.lg;
+    g.b=PT.ms.map(m=>(m.bot||m.lost)?[r3(m.x),r3(m.y)]:0);
+    const ek={};NET.peers.forEach(r=>{if(r.s&&PT.ms.some(m=>m.id===r.id))ek[r.id]=[num(r.s.t)|0,Math.round(now-r.rx)]});g.ek=ek}
+}
+function paBotRead(m){const B=PT.bst[m.i];if(!B)return null;return bufRead(B,B.st||(B.st={}),false)}
+function paConsume(now){
+  const hp=NET.role==='h'?null:NET.hostPeer;
+  // ホストの状態：段階・得点・CPU・時計
+  if(hp&&hp.s&&hp.s.g&&num(hp.s.g.gid,-1)===PT.gid){
+    const g=hp.s.g;
+    if(PT.rxq.host!==hp.q){PT.rxq.host=hp.q;
+      const o=hp.rx-num(hp.s.t,hp.rx); PT.offMin=PT.offMin==null||o<PT.offMin?o:PT.offMin+(o-PT.offMin)*.004; PT.hostOff=PT.offMin-(NET.rtt||60)/2;
+      const ek=g.ek&&g.ek[NET.id]; if(Array.isArray(ek)){const r=now-num(ek[0],-1e9)-num(ek[1]);if(r>0&&r<5000)NET.rtt=NET.rtt?NET.rtt*.85+r*.15:r}
+      if(Array.isArray(g.b)) g.b.forEach((b,i)=>{const m=PT.ms[i];if(!m||!Array.isArray(b))return;if(!m.bot&&!m.lost)m.lost=true;
+        let B=PT.bst[i];if(!B){B=[];PT.bst[i]=B}const ts=num(hp.s.t),x=num(b[0],NaN),y=num(b[1],NaN);if(!Number.isFinite(x)||!Number.isFinite(y))return;
+        const l=B[B.length-1];if(!l||ts>l.ts){B.push({ts,at:hp.rx,x,y});if(B.length>28)B.shift();const oo=hp.rx-ts;B.off=B.off==null||oo<B.off?oo:B.off+(oo-B.off)*.004}});
+    }
+    const ph=typeof g.ph==='string'?g.ph:'cd'; PT.pt=num(g.pt,PT.pt); PT.t0=num(g.t0,PT.t0);
+    if(Array.isArray(g.sc)) PT.sc=g.sc.map(v=>num(v)|0).slice(0,PT.A.sides);
+    PT.gqR=num(g.gq)|0; PT.lgR=Array.isArray(g.lg)?[num(g.lg[0])|0,num(g.lg[1],-1)|0]:null;
+    if(ph!==PT.ph){if(ph==='play'&&PT.ph!=='play'){PT.goalHold=false;PT.grep=null}PT.ph=ph;paHud()}
+    paSeenGoal();
+    if(ph==='over'&&state!=='over') paOver();
+  }
+  if(NET.role==='h'){ // ホスト：各ゲストの往復時間とゴールの知らせ
+    NET.peers.forEach(r=>{if(!r.s)return;const ek=r.s.ek&&r.s.ek[NET.id];if(Array.isArray(ek)&&PT.rxq['e'+r.id]!==r.q){PT.rxq['e'+r.id]=r.q;const v=now-num(ek[0],-1e9)-num(ek[1]);if(v>0&&v<5000)PT.rtt[r.id]=PT.rtt[r.id]?PT.rtt[r.id]*.85+v*.15:v}
+      if(Array.isArray(r.s.pg)&&r.s.cg===PT.gid&&num(r.s.pg[3])>=(HG.serveEp||1)) paHostGoal(num(r.s.pg[1])|0,num(r.s.pg[2],-1)|0,r.id+':'+num(r.s.pg[0]));});
+    const vs=Object.values(PT.rtt); if(vs.length) NET.rtt=vs.reduce((a,b)=>a+b,0)/vs.length;
+    if(state==='over'||HG.ph==='over'){if(state!=='over')paOver()}
+  }
+  // パック：一番新しい計算役（番号 ep が大きい・同じなら id が大きい方）の状態に合わせる
+  let best=null;
+  NET.peers.forEach(r=>{const s=r.s;if(!s||!Array.isArray(s.pp)||s.cg!==PT.gid)return;const e=num(s.pp[6],-1)|0;if(e<0)return;if(!best||e>best.e||(e===best.e&&r.id>best.r.id))best={e,r,p:s.pp}});
+  if(!best) return;
+  PT.epMax=Math.max(PT.epMax,best.e);
+  if(PT.own){if(best.e>PT.ep||(best.e===PT.ep&&best.r.id>NET.id)){PT.own=false}else return} // 自分より新しい計算役がいたら譲る
+  if(best.e<PT.ep) return;
+  if(PT.ph!=='play'){PT.ep=best.e;PT.ownId=best.r.id;PT.rxq[best.r.id]=best.r.q;return} // ゴール後・カウントダウン中は置いたパックをそのままにする
+  if(best.r.id===PT.ownId||best.e>PT.ep) PT.lastOwnRx=now;
+  if(PT.rxq[best.r.id]===best.r.q&&best.e===PT.ep) return; PT.rxq[best.r.id]=best.r.q;
+  const hard=best.e!==PT.ep||best.r.id!==PT.ownId; PT.ep=best.e; PT.ownId=best.r.id; PT.lastBy=num(best.p[7],-1)|0;
+  const hc=num(best.p[8])|0, prev=PT.hcSeen[best.r.id]; if(prev!==undefined&&hc>prev&&!hard){addRing(puck.x,puck.y,.6,'#ffffff');sfx.hit(.55,'mallet')} PT.hcSeen[best.r.id]=hc;
+  const owl=(best.r.id===(NET.hostPeer&&NET.hostPeer.id)||NET.role==='h'?(NET.role==='h'?(PT.rtt[best.r.id]||NET.rtt||60):(NET.rtt||60))/2:(NET.rtt||80)); // ゲスト同士はホスト経由なので往復分
+  const age=Math.min(.25,(now-best.r.rx)/1000+owl/1000);
+  paSnap(best.p,age,hard);
+}
+function paSnap(p,age,hard){
+  const A=PT.A, lim=A.pmax*1.3;
+  const st={x:num(p[0],puck.x),y:num(p[1],puck.y),vx:clamp(num(p[2]),-lim,lim),vy:clamp(num(p[3]),-lim,lim),w:clamp(num(p[4]),-160,160),a:num(p[5])};
+  const held=num(p[9])===1;
+  if(PT.ph==='play'&&!held) PT.goalHold=false; // 自分の予測ではゴールでも、計算役の画面で入っていなければ続ける
+  const t=held?st:paSimAhead(st,age), ex=t.x-puck.x, ey=t.y-puck.y;
+  if(hard||ex*ex+ey*ey>(.15*A.F)**2){puck.x=t.x;puck.y=t.y;PT.err[0]=PT.err[1]=0;if(hard)PT.trail.length=0}else{PT.err[0]=ex;PT.err[1]=ey}
+  puck.vx=t.vx; puck.vy=t.vy; puck.w=t.w; puck.a=t.a; if(held){PT.goalHold=true;puck.vx=puck.vy=0}
+}
+function paSimAhead(st,age){
+  const save=[puck.x,puck.y,puck.vx,puck.vy,puck.w,puck.a], sv2=[PT.portCd,PT.padT];
+  puck.x=st.x;puck.y=st.y;puck.vx=st.vx;puck.vy=st.vy;puck.w=st.w;puck.a=st.a;
+  QUIET=true; let t=age, T=paTime(performance.now())-age;
+  while(t>1e-4){const h=Math.min(1/240,t);if(paStep(h,T,false)){puck.vx=puck.vy=0;break}t-=h;T+=h}
+  QUIET=false; const out={x:puck.x,y:puck.y,vx:puck.vx,vy:puck.vy,w:puck.w,a:puck.a};
+  [puck.x,puck.y,puck.vx,puck.vy,puck.w,puck.a]=save; [PT.portCd,PT.padT]=sv2; return out;
+}
+/* ---- ロビーの表示用（ホストが配る設定と顔ぶれ） ---- */
+function lobbyCfg(){if(NET.role==='h')return cleanCfg(PCFG);const hp=NET.hostPeer,g=hp&&hp.s&&hp.s.g;return g&&g.pc?cleanCfg(g.pc):null}
+function lobbyRo(){if(NET.role==='h')return lobbyRoster(PCFG,false);const hp=NET.hostPeer,g=hp&&hp.s&&hp.s.g;return g&&Array.isArray(g.lr)?g.lr:[]}
+
+/* ---- 描画：自分のゴールが手前に来るよう回したリンク（2D） ---- */
+const PV={rot:0,S:100,mx:0,my:0,cx:0,cy:0,rw:.08,c:1,s:0,W:300,H:300,d:1}, PST=document.createElement('canvas'), PSPR=new Map();
+function paFit(A,side,Wc,Hc,d){ // リンク全体が収まる倍率と中心（回したあとの外接枠から）
+  const rot=A.rot[side], c=Math.cos(rot), s=Math.sin(rot), rw=RAIL*A.F*.95; let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  for(const p of A.poly){const dx=p[0]-A.C[0],dy=p[1]-A.C[1],qx=dx*c-dy*s,qy=dx*s+dy*c;x0=Math.min(x0,qx);x1=Math.max(x1,qx);y0=Math.min(y0,qy);y1=Math.max(y1,qy)}
+  const top=Hc>200?.11*A.F:0, S=Math.min((Wc-(Hc>200?14:6))/(x1-x0+2*rw),(Hc-(Hc>200?14:6))/(y1-y0+2*rw+top));
+  return{rot,S,mx:(x0+x1)/2,my:(y0+y1)/2-top/2,cx:A.C[0],cy:A.C[1],rw,c,s,W:Wc,H:Hc,d};
+}
+function paLayout(force){
+  const A=PT.A; if(!A) return;
+  Object.assign(PV,paFit(A,PT.me>=0?PT.side:0,cw,ch,dpr)); PSPR.clear(); paStatic(PST);
+}
+function paPreview(cnv,cfg){ // マップ選びの見本（その場で小さく描く）
+  const sv=Object.assign({},PV), sa=PT.A, A=buildArena(cfg), d=2;
+  try{PT.A=A;Object.assign(PV,paFit(A,0,cnv.width/d,cnv.height/d,d));paStatic(cnv,true)}finally{PT.A=sa;Object.assign(PV,sv)}
+}
+function toS(x,y){const dx=x-PV.cx,dy=y-PV.cy;return[PV.W/2+((dx*PV.c-dy*PV.s)-PV.mx)*PV.S,PV.H/2+((dx*PV.s+dy*PV.c)-PV.my)*PV.S]}
+function fromS(sx,sy){const qx=(sx-PV.W/2)/PV.S+PV.mx,qy=(sy-PV.H/2)/PV.S+PV.my;return[PV.cx+qx*PV.c+qy*PV.s,PV.cy-qx*PV.s+qy*PV.c]}
+function worldT(g){g.setTransform(PV.d,0,0,PV.d,0,0);g.translate(PV.W/2-PV.mx*PV.S,PV.H/2-PV.my*PV.S);g.rotate(PV.rot);g.scale(PV.S,PV.S);g.translate(-PV.cx,-PV.cy)}
+function polyPath(g,P){g.beginPath();P.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath()}
+function paStatic(cnv,prev){
+  const A=PT.A, th=A.th, g=cnv.getContext('2d'), lo=GQ.flat&&!prev, F=A.F, dpr=PV.d;
+  if(!prev){cnv.width=cv.width;cnv.height=cv.height} const PST=cnv; g.setTransform(1,0,0,1,0,0);
+  g.fillStyle=th.bg; g.fillRect(0,0,PST.width,PST.height);
+  if(!lo){const gr=g.createRadialGradient(PST.width/2,PST.height/2,0,PST.width/2,PST.height/2,Math.max(PST.width,PST.height)*.7);gr.addColorStop(0,hexA(th.rh,.12));gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,PST.width,PST.height)}
+  worldT(g);
+  // レール（外枠）
+  g.lineJoin='round';
+  if(!lo){g.save();g.shadowColor='rgba(0,0,0,.55)';g.shadowBlur=24*dpr;g.shadowOffsetY=10*dpr;polyPath(g,A.poly);g.lineWidth=PV.rw*2;g.strokeStyle=th.rail;g.stroke();g.restore()}
+  polyPath(g,A.poly); g.lineWidth=PV.rw*2; g.strokeStyle=th.rail; g.stroke();
+  if(!lo){polyPath(g,A.poly);g.lineWidth=PV.rw*.28;g.strokeStyle=hexA(th.rh,th.glow?.9:.55);g.stroke();
+    polyPath(g,A.poly);g.lineWidth=PV.rw*1.4;g.strokeStyle='rgba(255,255,255,.05)';g.stroke()}
+  // 盤面
+  polyPath(g,A.poly);
+  if(lo){g.fillStyle=th.f0;g.fill()}
+  else{const R=Math.max(A.Wd||A.s,A.Ld||A.s)*.75,gr=g.createRadialGradient(A.C[0],A.C[1],0,A.C[0],A.C[1],R);gr.addColorStop(0,th.f0);gr.addColorStop(1,th.f1);g.fillStyle=gr;g.fill()}
+  g.save(); polyPath(g,A.poly); g.clip(); const bb=paBBox(A);
+  if(!lo){
+    if(th.dot){g.fillStyle=th.dot;const st=.055*F;for(let x=bb[0];x<bb[2];x+=st)for(let y=bb[1];y<bb[3];y+=st){g.beginPath();g.arc(x,y,.0055*F,0,TAU);g.fill()}}
+    if(th.grid){g.strokeStyle=th.grid;g.lineWidth=.004*F;const st=.12*F;g.beginPath();for(let x=bb[0];x<bb[2];x+=st){g.moveTo(x,bb[1]);g.lineTo(x,bb[3])}for(let y=bb[1];y<bb[3];y+=st){g.moveTo(bb[0],y);g.lineTo(bb[2],y)}g.stroke()}
+    if(th.ice){const R=prng(21);g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=.003*F;for(let i=0;i<70;i++){const x=bb[0]+R()*(bb[2]-bb[0]),y=bb[1]+R()*(bb[3]-bb[1]),a=R()*TAU,l=(.05+R()*.25)*F;g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+Math.cos(a+.4)*l*.5,y+Math.sin(a+.4)*l*.5,x+Math.cos(a)*l,y+Math.sin(a)*l);g.stroke()}}
+    if(th.sand){g.strokeStyle='rgba(140,90,40,.16)';g.lineWidth=.006*F;for(let y=bb[1];y<bb[3];y+=.07*F){g.beginPath();for(let x=bb[0];x<=bb[2];x+=.05*F)g.lineTo(x,y+Math.sin(x*9/F+y*3)*.012*F);g.stroke()}}
+    if(th.stars){const R=prng(31);for(let i=0;i<220;i++){const s=R();g.fillStyle=`rgba(255,255,255,${.25+.6*s})`;g.beginPath();g.arc(bb[0]+R()*(bb[2]-bb[0]),bb[1]+R()*(bb[3]-bb[1]),(.002+.006*s*s)*F,0,TAU);g.fill()}}
+    if(th.lane){g.strokeStyle='rgba(255,255,255,.12)';g.lineWidth=.008*F;g.setLineDash([.06*F,.06*F]);for(let k=-3;k<=3;k++){const p=v2.add(A.C,v2.mul(A.goals[0].t,k*.22*F));g.beginPath();g.moveTo(p[0]-A.goals[0].n[0]*3,p[1]-A.goals[0].n[1]*3);g.lineTo(p[0]+A.goals[0].n[0]*3,p[1]+A.goals[0].n[1]*3);g.stroke()}g.setLineDash([])}
+    if(th.hazard){for(const gl of A.goals){g.save();g.translate(gl.c[0],gl.c[1]);g.rotate(Math.atan2(gl.t[1],gl.t[0]));for(let k=-12;k<12;k++){g.fillStyle=k&1?'rgba(244,197,52,.2)':'rgba(20,20,20,.12)';g.beginPath();g.moveTo(k*.05*F,.0);g.lineTo(k*.05*F+.05*F,0);g.lineTo(k*.05*F+.02*F,.05*F);g.lineTo(k*.05*F-.03*F,.05*F);g.fill()}g.restore()}}
+  }
+  // ラインと各サイドの陣地
+  const lw=.009*F; g.lineWidth=lw;
+  if(A.tri){g.strokeStyle=hexA(th.line,.75);g.setLineDash([.03*F,.025*F]);for(const gl of A.goals){const th_=Math.atan2(-gl.n[1],-gl.n[0])+Math.PI/3;g.beginPath();g.moveTo(A.C[0],A.C[1]);g.lineTo(A.C[0]+Math.cos(th_)*3,A.C[1]+Math.sin(th_)*3);g.stroke()}g.setLineDash([])}
+  else{g.strokeStyle=hexA(th.line,.85);g.beginPath();g.moveTo(A.C[0]-A.Wd,A.C[1]);g.lineTo(A.C[0]+A.Wd,A.C[1]);g.stroke()}
+  g.strokeStyle=hexA(th.line,.85); g.beginPath(); g.arc(A.C[0],A.C[1],.17*F,0,TAU); g.stroke();
+  g.fillStyle=hexA(th.line,.9); g.beginPath(); g.arc(A.C[0],A.C[1],.016*F,0,TAU); g.fill();
+  for(const gl of A.goals){const col=SIDEC[gl.side].c, ang=Math.atan2(gl.n[1],gl.n[0]);
+    const ga=A.hw*(A.tri?1.3:1.55); g.strokeStyle=hexA(col,.85); g.lineWidth=lw*1.2; g.beginPath(); g.arc(gl.c[0],gl.c[1],ga,ang-Math.PI/2,ang+Math.PI/2); g.stroke();
+    if(!lo){g.fillStyle=hexA(col,th.dark?.1:.06);g.beginPath();g.moveTo(gl.c[0],gl.c[1]);g.arc(gl.c[0],gl.c[1],ga,ang-Math.PI/2,ang+Math.PI/2);g.closePath();g.fill()}
+    if(A.crease){const c=A.crease[gl.side];g.fillStyle=hexA(col,.16);g.beginPath();g.moveTo(c.x,c.y);g.arc(c.x,c.y,c.r,ang-Math.PI/2,ang+Math.PI/2);g.closePath();g.fill();g.setLineDash([.02*F,.015*F]);g.strokeStyle=hexA(col,.9);g.beginPath();g.arc(c.x,c.y,c.r,ang-Math.PI/2,ang+Math.PI/2);g.stroke();g.setLineDash([])}}
+  if(A.movers.length&&!A.tri){g.strokeStyle=hexA(th.line,.35);g.setLineDash([.02*F,.02*F]);g.lineWidth=lw*.8;for(const o of A.movers){const a=o.f(0),b=o.f(Math.PI/2/A.map.ob.mover.w),c2=o.f(-Math.PI/2/A.map.ob.mover.w);g.beginPath();g.moveTo(c2[0],c2[1]);g.lineTo(b[0],b[1]);g.stroke()}g.setLineDash([])}
+  if(A.movers.length&&A.tri){g.strokeStyle=hexA(th.line,.35);g.setLineDash([.02*F,.02*F]);g.lineWidth=lw*.8;g.beginPath();g.arc(A.C[0],A.C[1],A.map.ob.mover.tri[0][0]*A.R,0,TAU);g.stroke();g.setLineDash([])}
+  g.restore();
+  // ゴール口（レールの切り欠き）
+  for(const gl of A.goals){const col=SIDEC[gl.side].c,o=v2.mul(gl.n,-PV.rw*1.05);
+    g.fillStyle=th.goal; g.beginPath(); g.moveTo(...gl.a); g.lineTo(...gl.b); g.lineTo(...v2.add(gl.b,o)); g.lineTo(...v2.add(gl.a,o)); g.closePath(); g.fill();
+    g.strokeStyle=col; g.lineWidth=.008*F; g.beginPath(); g.moveTo(...v2.add(gl.a,v2.mul(o,.82))); g.lineTo(...v2.add(gl.b,v2.mul(o,.82))); g.stroke();
+    g.fillStyle=lo?'#c9d0d8':'#e7ecf0'; for(const p of [gl.a,gl.b]){g.beginPath();g.arc(p[0],p[1],.012*F,0,TAU);g.fill()}}
+  // 障害物（動かないもの）
+  for(const o of A.circ) paDrawCircle(g,o,lo,th);
+  for(const o of A.polys){polyPath(g,o.pts);if(lo){g.fillStyle=th.line;g.fill()}else{const b=paBBox({poly:o.pts}),gr=g.createLinearGradient(b[0],b[1],b[2],b[3]);gr.addColorStop(0,'#aab6ff');gr.addColorStop(.5,th.line);gr.addColorStop(1,'#2a2f6a');g.fillStyle=gr;g.fill();g.lineWidth=.008*F;g.strokeStyle='rgba(255,255,255,.7)';g.stroke();
+    g.strokeStyle='rgba(255,255,255,.25)';g.lineWidth=.004*F;const c=o.pts.reduce((a,p)=>[a[0]+p[0]/o.pts.length,a[1]+p[1]/o.pts.length],[0,0]);g.beginPath();o.pts.forEach((p,i)=>{if(i%4===0){g.moveTo(c[0],c[1]);g.lineTo(p[0],p[1])}});g.stroke()}}
+  for(const p of A.pads){g.fillStyle=lo?hexA(th.line,.3):hexA(th.line,.16);g.beginPath();g.arc(p.x,p.y,p.r,0,TAU);g.fill();g.strokeStyle=hexA(th.line,.8);g.lineWidth=.006*F;g.stroke();
+    g.save();g.translate(p.x,p.y);g.rotate(Math.atan2(p.dy,p.dx));g.fillStyle=th.line;for(let k=-1;k<=1;k++){g.beginPath();g.moveTo(k*p.r*.38-p.r*.12,-p.r*.4);g.lineTo(k*p.r*.38+p.r*.2,0);g.lineTo(k*p.r*.38-p.r*.12,p.r*.4);g.lineTo(k*p.r*.38-p.r*.02,0);g.closePath();g.fill()}g.restore()}
+  if(prev){for(const o of paMovers(0))paDrawCircle(g,o,false,th);A.portals.forEach((p,i)=>{g.strokeStyle=i%2?'#3a7ff0':'#ff8a3d';g.lineWidth=.014*F;g.beginPath();g.arc(p.x,p.y,p.r,0,TAU);g.stroke();g.fillStyle=hexA(i%2?'#3a7ff0':'#ff8a3d',.3);g.fill()})} // 見本には動く仕掛けも止めて描く
+  if(A.hole){const o=A.hole;if(lo){g.fillStyle='#000';g.beginPath();g.arc(o.x,o.y,o.core*2.2,0,TAU);g.fill()}
+    else{const gr=g.createRadialGradient(o.x,o.y,0,o.x,o.y,o.R);gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.08,'rgba(0,0,0,.95)');gr.addColorStop(.14,hexA(th.line,.65));gr.addColorStop(.35,hexA(th.line,.12));gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.beginPath();g.arc(o.x,o.y,o.R,0,TAU);g.fill()}}
+}
+function paBBox(A){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const p of A.poly){x0=Math.min(x0,p[0]);y0=Math.min(y0,p[1]);x1=Math.max(x1,p[0]);y1=Math.max(y1,p[1])}return[x0,y0,x1,y1]}
+function paDrawCircle(g,o,lo,th){
+  const F=PT.A.F;
+  if(o.kind==='bump'){g.fillStyle=lo?'#ff4fa0':'#ff4fa0';g.beginPath();g.arc(o.x,o.y,o.r,0,TAU);g.fill();if(!lo){const gr=g.createRadialGradient(o.x-o.r*.3,o.y-o.r*.35,o.r*.1,o.x,o.y,o.r);gr.addColorStop(0,'rgba(255,255,255,.75)');gr.addColorStop(.5,'rgba(255,255,255,0)');gr.addColorStop(1,'rgba(0,0,0,.35)');g.fillStyle=gr;g.fill()}
+    g.lineWidth=o.r*.22;g.strokeStyle='#ffd23f';g.beginPath();g.arc(o.x,o.y,o.r*.78,0,TAU);g.stroke();g.fillStyle='#fff';g.beginPath();g.arc(o.x,o.y,o.r*.22,0,TAU);g.fill()}
+  else if(o.kind==='mover'){g.fillStyle='#f4c534';g.beginPath();g.arc(o.x,o.y,o.r,0,TAU);g.fill();g.save();g.beginPath();g.arc(o.x,o.y,o.r*.92,0,TAU);g.clip();g.fillStyle='#1b1b1b';for(let k=-4;k<4;k++){g.beginPath();g.moveTo(o.x+k*o.r*.5,o.y-o.r);g.lineTo(o.x+k*o.r*.5+o.r*.25,o.y-o.r);g.lineTo(o.x+k*o.r*.5+o.r*1.25,o.y+o.r);g.lineTo(o.x+k*o.r*.5+o.r,o.y+o.r);g.fill()}g.restore();
+    if(!lo){g.lineWidth=o.r*.12;g.strokeStyle='rgba(0,0,0,.45)';g.beginPath();g.arc(o.x,o.y,o.r,0,TAU);g.stroke()}}
+  else{ // 柱
+    if(!lo){g.fillStyle='rgba(0,0,0,.25)';g.beginPath();g.arc(o.x+o.r*.18,o.y+o.r*.25,o.r*1.05,0,TAU);g.fill()}
+    if(lo){g.fillStyle='#5d6a5f';g.beginPath();g.arc(o.x,o.y,o.r,0,TAU);g.fill()}
+    else{const gr=g.createRadialGradient(o.x-o.r*.35,o.y-o.r*.4,o.r*.1,o.x,o.y,o.r);gr.addColorStop(0,'#ffffff');gr.addColorStop(.45,'#9aa7a0');gr.addColorStop(1,'#3a443e');g.fillStyle=gr;g.beginPath();g.arc(o.x,o.y,o.r,0,TAU);g.fill()}}
+}
+function paSprite(key,r,fn){ // 画面の倍率に合わせて作るマレット・パックの絵
+  const k=key+'|'+PV.S.toFixed(2)+'|'+dpr; let s=PSPR.get(k);
+  if(!s){const half=r*1.4,px=Math.max(2,Math.ceil(half*2*PV.S*dpr)),c=document.createElement('canvas');c.width=c.height=px;const g=c.getContext('2d');g.scale(px/(half*2),px/(half*2));g.translate(half,half);fn(g,r);s={c,h:half*PV.S};PSPR.set(k,s);if(PSPR.size>40)PSPR.delete(PSPR.keys().next().value)}
+  return s;
+}
+function paSkin(m){ // CPU と、標準のまま（赤のクラシック）の人はサイドの色で塗る（同じ赤ばかりで見分けがつかないのを防ぐ）
+  const side={pat:'classic',body:SIDEC[m.side].c,knob:SIDEC[m.side].c,line:'#ffffff',gloss:.6};
+  if(m.bot||m.lost) return side;
+  const r=m.i===PT.me?null:NET.peers.get(m.id), sk=m.i===PT.me?skin:(r&&peerSkin(r));
+  if(!sk||(sk.pat==='classic'&&sk.body===SKIN_DEF.body&&sk.knob===SKIN_DEF.knob)) return side;
+  return sk;
+}
+function partyRender(dt,now){
+  const A=PT.A; if(!A) return; const g=ctx, lo=GQ.flat, F=A.F, T=paTime(now);
+  if(PST.width!==cv.width||PST.height!==cv.height) paLayout(true);
+  const sh=RM.matches?0:shakeA, jx=(Math.random()*2-1)*sh*5, jy=(Math.random()*2-1)*sh*5;
+  g.setTransform(1,0,0,1,0,0); g.clearRect(0,0,cv.width,cv.height); g.drawImage(PST,jx*dpr,jy*dpr);
+  worldT(g); g.translate(jx/PV.S,jy/PV.S); // 揺れは画面の向きに関係なく小さく
+  // 動く仕掛け
+  if(!lo){
+    for(const p of A.portals){const col=A.portals.indexOf(p)%2?'#3a7ff0':'#ff8a3d';for(let k=0;k<3;k++){g.strokeStyle=hexA(col,.85-k*.22);g.lineWidth=.008*F;g.beginPath();g.arc(p.x,p.y,p.r*(1-k*.22),now/300*(k&1?-1:1)+k,now/300*(k&1?-1:1)+k+4.2);g.stroke()}
+      const gr=g.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);gr.addColorStop(0,hexA(col,.55));gr.addColorStop(1,hexA(col,0));g.fillStyle=gr;g.beginPath();g.arc(p.x,p.y,p.r,0,TAU);g.fill()}
+    if(A.hole){const o=A.hole;g.strokeStyle=hexA(A.th.line,.35);g.lineWidth=.006*F;for(let k=0;k<3;k++){const a=-now/500+k*2.1;g.beginPath();g.arc(o.x,o.y,o.R*(.25+k*.18),a,a+1.6);g.stroke()}}
+    for(const p of A.pads){const pu=.5+.5*Math.sin(now/180);g.strokeStyle=hexA(A.th.line,.25+.45*pu);g.lineWidth=.01*F;g.beginPath();g.arc(p.x,p.y,p.r*(1+.08*pu),0,TAU);g.stroke()}
+  }else for(const p of A.portals){g.strokeStyle=A.portals.indexOf(p)%2?'#3a7ff0':'#ff8a3d';g.lineWidth=.012*F;g.beginPath();g.arc(p.x,p.y,p.r,0,TAU);g.stroke()}
+  for(const o of paMovers(T)) paDrawCircle(g,o,lo,A.th);
+  // ゴールの光
+  if(PT.flash>0){PT.flash=Math.max(0,PT.flash-dt*.8);const gl=A.goals[PT.flashSide||0],gr=g.createRadialGradient(gl.c[0],gl.c[1],0,gl.c[0],gl.c[1],A.hw*3);gr.addColorStop(0,hexA(SIDEC[gl.side].c,.55*PT.flash));gr.addColorStop(1,hexA(SIDEC[gl.side].c,0));g.fillStyle=gr;g.beginPath();g.arc(gl.c[0],gl.c[1],A.hw*3,0,TAU);g.fill()}
+  // パックの軌跡
+  const sp=Math.hypot(puck.vx,puck.vy), k=clamp((sp-1.2*Math.sqrt(F))/3,0,1), tr=PT.trail;
+  if(GQ.trail&&k>0&&tr.length>=4){g.lineCap='round';g.strokeStyle=A.th.dark?'#9fb4ff':'#2b3038';const n=tr.length/2;for(let i=1;i<n;i++){const f=i/n;g.globalAlpha=.22*f*k;g.lineWidth=2*A.pr*(.35+.6*f);g.beginPath();g.moveTo(tr[2*i-2],tr[2*i-1]);g.lineTo(tr[2*i],tr[2*i+1]);g.stroke()}g.globalAlpha=1}
+  // 当たりのリングと火花
+  for(let i=rings.length-1;i>=0;i--){const r=rings[i];r.t+=dt;const p=r.t/r.life;if(p>=1){rings.splice(i,1);continue}const e=1-(1-p)*(1-p);g.globalAlpha=(1-p)*(.35+.5*r.s);g.strokeStyle=r.c;g.lineWidth=(.008*(1-p)+.002)*F;g.beginPath();g.arc(r.x,r.y,(.012+e*(.05+.07*r.s))*F,0,TAU);g.stroke()}
+  g.strokeStyle='#f6b23a'; g.lineCap='round';
+  for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];s.t+=dt;if(s.t>=s.life){sparks.splice(i,1);continue}const f=Math.exp(-6*dt);s.vx*=f;s.vy*=f;s.x+=s.vx*dt*F;s.y+=s.vy*dt*F;g.globalAlpha=1-s.t/s.life;g.lineWidth=.0045*F;g.beginPath();g.moveTo(s.x,s.y);g.lineTo(s.x-s.vx*.014*F,s.y-s.vy*.014*F);g.stroke()}
+  g.globalAlpha=1;
+  // 影
+  if(!lo){g.fillStyle='rgba(10,20,35,.22)';for(const m of PT.ms){g.beginPath();g.arc(m.x+.012*F,m.y+.018*F,A.mr*1.02,0,TAU);g.fill()}g.beginPath();g.arc(puck.x+.006*F,puck.y+.01*F,A.pr,0,TAU);g.fill()}
+  // ここから画面の向き（回さない絵）
+  g.setTransform(dpr,0,0,dpr,jx*dpr,jy*dpr);
+  const ps=paSprite('puck'+(lo?'f':''),A.pr,lo?((q,r)=>{q.fillStyle='#1b1f25';circ(q,0,0,r);q.fill();q.lineWidth=r*.16;q.strokeStyle=COL.gold;circ(q,0,0,r*.6);q.stroke()}):drawPuck);
+  const P=toS(puck.x,puck.y); g.save(); g.translate(P[0],P[1]); g.rotate(puck.a+PV.rot); g.drawImage(ps.c,-ps.h,-ps.h,ps.h*2,ps.h*2); g.restore();
+  g.font=`800 ${clamp(PV.S*.05*F,10,13)}px "Zen Kaku Gothic New",sans-serif`; g.textAlign='center'; g.textBaseline='bottom';
+  for(const m of PT.ms){
+    const sk=paSkin(m), s=paSprite('m'+skinArr(sk).join('|')+(lo?'f':''),A.mr,(q,r)=>lo?flatMallet(q,r,patMeta(sk.pat).dark?'#23272e':sk.body,patMeta(sk.pat).dark?sk.body:shade(sk.knob,-.25)):drawMalletSkin(q,r,sk)), Q=toS(m.x,m.y), R=A.mr*PV.S;
+    if(A.per>1||A.tri){g.lineWidth=Math.max(2,R*.14);g.strokeStyle=SIDEC[m.side].c;g.beginPath();g.arc(Q[0],Q[1],R*1.12,0,TAU);g.stroke()}
+    if(m.i===PT.me){g.lineWidth=2;g.strokeStyle=`rgba(255,255,255,${.55+.3*Math.sin(now/250)})`;g.beginPath();g.arc(Q[0],Q[1],R*1.3,0,TAU);g.stroke()}
+    g.drawImage(s.c,Q[0]-s.h,Q[1]-s.h,s.h*2,s.h*2);
+    const nmT=m.i===PT.me?'YOU':(m.bot||m.lost)?(A.per>1?'':'CPU'):paName(m); if(!nmT) continue; /* チーム戦の CPU は名前を出さない（重なって読めないため） */ g.fillStyle=A.th.dark?'rgba(0,0,0,.55)':'rgba(255,255,255,.72)'; const tw=g.measureText(nmT).width+8, ty=Q[1]-R*1.3;
+    g.fillRect(Q[0]-tw/2,ty-14,tw,15); g.fillStyle=A.th.dark?SIDEC[m.side].l:SIDEC[m.side].d; g.fillText(nmT,Q[0],ty);
+  }
+  // カウントダウン
+  if(PT.ph==='cd'){const rem=3-(paHostClock(now)-PT.pt)/1000,n=Math.ceil(rem);if(n>=1&&n<=3){const f=rem-Math.floor(rem);g.font=`900 ${Math.min(cw,ch)*.22}px "Big Shoulders Display",sans-serif`;g.textAlign='center';g.textBaseline='middle';g.globalAlpha=Math.min(1,f*2+.2);g.fillStyle='#fff';g.strokeStyle='rgba(11,13,16,.85)';g.lineWidth=8;g.strokeText(n,cw/2,ch/2);g.fillText(n,cw/2,ch/2);g.globalAlpha=1;if(PT.cdN!==n){PT.cdN=n;sfx.ui('count',n*6)}}}
+  else if(PT.cdN){PT.cdN=0;if(PT.ph==='play'){banner('GO!',COL.gold);sfx.ui('go2')}}
+}
+/* ---- 上の得点表示（サイドごと） ---- */
+function paHud(on){
+  const b=$('pboard'); if(on===false){b.hidden=true;b.textContent='';return}
+  if(!PT.on||!PT.A) return; b.hidden=false;
+  const A=PT.A, order=[...Array(A.sides).keys()].sort((x,y)=>(x===PT.side)-(y===PT.side)); // 自分のサイドを右端に
+  const sig=JSON.stringify([order,PT.sc,PT.ms.map(m=>[m.side,paName(m)])]); if(b.dataset.sig===sig) return; b.dataset.sig=sig; b.textContent='';
+  order.forEach(s=>{const c=document.createElement('div');c.className='pchip'+(s===PT.side&&PT.me>=0?' mine':'');c.style.setProperty('--c',SIDEC[s].c);c.style.setProperty('--l',SIDEC[s].l);
+    const n=document.createElement('b');n.textContent=PT.sc[s]||0;const t=document.createElement('span');
+    const ms=PT.ms.filter(m=>m.side===s),names=ms.map(m=>m.i===PT.me?'YOU':paName(m));t.textContent=A.per>1?(s===PT.side&&PT.me>=0?'YOUR TEAM':SIDEC[s].en):(ms[0]&&ms[0].i===PT.me?'YOU':ms[0]&&(ms[0].bot||ms[0].lost)?'CPU':names[0]||SIDEC[s].en);t.title=names.join('・');
+    c.append(n,t);b.appendChild(c)});
+}
+function partyAim(cx,cy){if(!rect||!rect.width)rect=stage.getBoundingClientRect();const p=fromS(cx-rect.left,cy-rect.top);target.x=p[0];target.y=p[1]}
+function partyKey(dx,dy){if(PT.me<0)return;const m=PT.ms[PT.me],k=.09*PT.A.F,c=Math.cos(-PV.rot),s=Math.sin(-PV.rot);target.x=m.x+(dx*c-dy*s)*k;target.y=m.y+(dx*s+dy*c)*k}
+
 /* ---- 待機室・表示 ---- */
 let waitSig='';
 function renderWait(){
-  $('waitTitle').textContent=NET.srv?NET.srv.name:'';
+  t3Prep();
+  $('waitTitle').textContent=NET.srv?NET.srv.name:''; renderWaitCfg();
+  const lc=lobbyCfg(); if(lc&&!isClassic(lc)){const w=renderWaitParty(lc);paintWait(w.rows,w.note);$('hostStart').hidden=NET.role!=='h';$('hostStart').disabled=!w.canStart;return}
   const rows=[]; const H=NET.hostG; let note_='';
   if(NET.role==='h'){
     rows.push([myName(),'HOST · YOU',COL.red]);
@@ -3290,11 +4038,14 @@ function renderWait(){
     if(hp&&g.opp!==NET.id) rows.push([myName(),'WATCH · YOU','#7d8792']);
     note_=!hp?'ホストを探しています…':g.opp===NET.id?'ホストの「試合開始」を待っています。':'対戦は2人までです。観戦として入っています。';
   }
+  paintWait(rows,note_);
+  $('hostStart').hidden=NET.role!=='h'; $('hostStart').disabled=!H.opp;
+}
+function paintWait(rows,note_){
   const sig=JSON.stringify(rows);
   if(sig!==waitSig){waitSig=sig;const ul=$('waitList');ul.textContent='';
     rows.forEach(([n,t,c],i)=>{const li=document.createElement('li'),sp=document.createElement('span'),sm=document.createElement('small');li.style.setProperty('--c',c);li.style.animationDelay=(i*60)+'ms';sp.textContent=n;sm.textContent=t;li.append(sp,sm);ul.appendChild(li)})}
   $('waitNote').textContent=note_;
-  $('hostStart').hidden=NET.role!=='h'; $('hostStart').disabled=!H.opp;
 }
 function setLabels(){
   let top=match.type==='level'&&NET.mode!=='online'?`CPU LV.${match.lv}`:'CPU',bot='YOU';
@@ -3332,7 +4083,7 @@ function netSub(){$('netSub').textContent='CONNECTION · '+(METHODS.find(m=>m[0]
 /* ===== 画面遷移：画面ごとに違う登場アニメーション ===== */
 const ui=$('ui'), scr={}; document.querySelectorAll('.scr').forEach(s=>{scr[s.id.slice(2)]=s});
 let cur=null; const hist=[]; let uiCloseT=0;
-const ANIM={settings:'tune',home:'boot',practice:'slash',online:'shutter',create:'flip',join:'zoom',net:'rise',busy:'glitch',wait:'blinds',pause:'drop',over:'result',skin:'iris'};
+const ANIM={party:'rise',map:'zoom',settings:'tune',home:'boot',practice:'slash',online:'shutter',create:'flip',join:'zoom',net:'rise',busy:'glitch',wait:'blinds',pause:'drop',over:'result',skin:'iris'};
 function bodyMode(){document.body.classList.toggle('menu',state==='menu'&&cur!==null)}
 function go(name,o){
   o=o||{}; const nx=scr[name]; if(!nx) return;
@@ -3357,13 +4108,15 @@ function closeUI(){
 }
 function sweep(mid){
   if(RM.matches){mid();return}
-  sfx.ui('launch'); const sw=$('sweep'); sw.classList.remove('run'); void sw.offsetWidth; sw.classList.add('run');
-  setTimeout(mid,360);
+  sfx.ui('launch'); if(gfx==='lo'){setTimeout(mid,60);return} const sw=$('sweep'); sw.classList.remove('run'); void sw.offsetWidth; sw.classList.add('run');
+  setTimeout(mid,gfx==='mid'?240:360);
 }
 function onShow(name){
-  if(name==='online'){$('nameIn').value=myNameV;netSub()}
+  if(name==='online'){$('nameIn').value=myNameV;netSub();$('mapSub').textContent='MAP · '+MAPS[PCFG.map].name}
+  else if(name==='party'){renderParty()}
+  else if(name==='map'){renderMaps()}
   else if(name==='join'){NET.srvSig='';renderServers();if(method!=='room'&&(!NET.api||method!=='auto'))startMqLobby()}
-  else if(name==='create'){if(!$('mkName').value)$('mkName').value=`${myName()}の部屋`}
+  else if(name==='create'){if(!$('mkName').value)$('mkName').value=`${myName()}の部屋`;const c=cleanCfg(PCFG),el=$('mkMode');el.textContent='';const b=document.createElement('b');b.textContent=`${modeLabel(c)} · ${MAPS[c.map].name}`;el.append('この設定で作ります：',b,'（トリオ・チーム・マップはオンラインの画面で変えられます）')}
   else if(name==='net'){renderNet();envNote()}
   else if(name==='wait'){waitSig='';renderWait()}
   else if(name==='practice'){diffSeg.sync();diffHint();selLv=Math.min(selLv,lvData.open);renderLevels()}
@@ -3401,6 +4154,66 @@ function diffHint(){
   if(sp.textContent!==h[0]){const n=document.createElement('span');n.textContent=h[0];sp.replaceWith(n)}
 }
 const diffSeg=makeSeg($('diffSeg'),()=>diff,v=>{diff=v;savePrefs();diffHint()});
+/* ---- 画面：モード設定・マップ選び・待機室 ---- */
+const hostingLobby=()=>NET.mode==='online'&&NET.role==='h'&&!inMatch();
+function cfgChanged(){savePCFG();$('mapSub').textContent='MAP · '+MAPS[PCFG.map].name;if(hostingLobby()){waitSig='';lobbyAnnounce()}}
+const pmSeg=makeSeg($('pmSeg'),()=>PCFG.m,v=>{PCFG.m=v;cfgChanged();renderParty()});
+const pnSeg=makeSeg($('pnSeg'),()=>String(PCFG.n),v=>{PCFG.n=+v;cfgChanged();renderParty()});
+function renderParty(){
+  const c=cleanCfg(PCFG), host=hostingLobby(), guestLobby=NET.mode==='online'&&NET.role==='g';
+  pmSeg.sync(); pnSeg.sync(); $('pnRow').hidden=c.m!=='team';
+  $('pKick').textContent=c.m==='trio'?'TRIO MODE · 3人で三つ巴':c.m==='team'?`TEAM MODE · ${c.n}VS${c.n}`:'1VS1 MODE';
+  $('pTitle').textContent=c.m==='trio'?'トリオモード':c.m==='team'?'チームモード':'1vs1';
+  const M=MAPS[c.map]; $('pMapNm').textContent=`${M.name}`; $('pMapDesc').textContent=M.desc; paPreview($('pMapPrev'),c);
+  $('pCpu').setAttribute('aria-checked',String(c.cpu));
+  $('pNote').textContent=c.m==='trio'?'三角形のリンクで3人が三つ巴。自分のゴールを守りながら、ほかの2人のゴールを狙います。決めた人に1点（自分のゴールに入れると他の2人に1点）。7点先取。'
+    :c.m==='team'?`${c.n}人ずつ同じ陣地で戦います。リンクは1vs1の${TEAM_SC[c.n].F}倍、パックは${TEAM_SC[c.n].P}倍。ゴール前の半円にはマレットが入れません。7点先取。`
+    :isClassic(c)?'いつもの1vs1（3D・確定演出あり）。':'マップつきの1vs1。7点先取。';
+  $('pCreate').hidden=host||guestLobby; $('pJoin').hidden=host||guestLobby; $('pBack').hidden=!host;
+  if(guestLobby) $('pNote').textContent='設定を変えられるのはホストだけです。';
+}
+function renderMaps(){
+  const box=$('mapList'), c=cleanCfg(PCFG); if(box.dataset.m!==c.m+c.n){box.dataset.m=c.m+c.n;box.textContent='';
+    MAPS.forEach((M,i)=>{const b=document.createElement('button');b.type='button';b.className='mapc';b.setAttribute('role','radio');b.dataset.i=i;
+      const cv_=document.createElement('canvas');cv_.width=cv_.height=200;const t=document.createElement('span'),n=document.createElement('b'),d=document.createElement('small');
+      n.textContent=`${String(i+1).padStart(2,'0')} ${M.name}`;d.textContent=M.desc;t.append(n,d);b.append(cv_,t);
+      b.addEventListener('click',()=>{if(NET.mode==='online'&&NET.role==='g')return;PCFG.map=i;cfgChanged();sfx.ui('tick');buzz(6);syncMaps()});box.appendChild(b);
+      requestAnimationFrame(()=>paPreview(cv_,Object.assign({},c,{map:i})))})}
+  syncMaps();
+}
+function syncMaps(){document.querySelectorAll('#mapList .mapc').forEach(b=>b.setAttribute('aria-checked',String(+b.dataset.i===PCFG.map)));$('mapNote').textContent=NET.mode==='online'&&NET.role==='g'?'マップを変えられるのはホストだけです。':`選んだマップ：${MAPS[PCFG.map].name}（${modeLabel(cleanCfg(PCFG))}）`}
+$('pCpu').addEventListener('click',()=>{PCFG.cpu=!PCFG.cpu;cfgChanged();renderParty();sfx.ui('tick')});
+$('pMapBtn').addEventListener('click',()=>{sfx.init();go('map')});
+$('pCreate').addEventListener('click',()=>{sfx.init();go('create')});
+$('pJoin').addEventListener('click',()=>{sfx.init();go('join')});
+$('pBack').addEventListener('click',()=>{sfx.ui('join');backTo('wait')});
+$('trioBtn').addEventListener('click',()=>{PCFG.m='trio';cfgChanged();sfx.init();go('party')});
+$('teamBtn').addEventListener('click',()=>{PCFG.m='team';cfgChanged();sfx.init();go('party')});
+$('wcMode').addEventListener('click',()=>{sfx.init();go('party')});
+$('wcMap').addEventListener('click',()=>{sfx.init();go('map')});
+$('wcTeam').addEventListener('click',()=>{const ro=lobbyRo(),me=ro.find(r=>r[0]===NET.id);PT.req=me?1-me[1]:(PT.req===0?1:0);waitSig='';sfx.ui('tick');renderWait()});
+/* 待機室（パーティー用の顔ぶれ） */
+function renderWaitParty(c){
+  const ro=lobbyRo(), rows=[], hp=NET.hostPeer, cap=capOf(c), ids=new Set(ro.map(r=>r[0]));
+  const nmOf=id=>id===NET.id?myName():nm(NET.peers.get(id));
+  const tag=(id,side)=>{const s=SIDEC[side];return(c.m==='team'?`${s.jp}チーム`:`${s.jp}`)+(id===NET.id?' · YOU':'')+((NET.role==='h'&&id===NET.id)||(hp&&hp.id===id)?' · HOST':'')};
+  ro.slice().sort((a,b)=>a[1]-b[1]).forEach(([id,side])=>rows.push([nmOf(id),tag(id,side),SIDEC[side].c]));
+  const humans=ro.length;
+  if(c.cpu&&humans<cap){const cnt=new Array(c.m==='trio'?3:2).fill(0);ro.forEach(r=>cnt[r[1]]++);const per=c.m==='team'?c.n:1;cnt.forEach((k,s)=>{for(let i=k;i<per;i++)rows.push(['CPU',`${SIDEC[s].jp}${c.m==='team'?'チーム':''} · 空き枠`,'#7d8792'])})}
+  NET.peers.forEach(r=>{if(r.s&&!ids.has(r.id))rows.push([nm(r),'WATCH','#7d8792'])});
+  if(!ids.has(NET.id)&&NET.role!=='h') rows.push([myName(),'WATCH · YOU','#7d8792']);
+  const need=cap-humans;
+  const note_=NET.role==='h'?(need<=0?'そろいました。「試合開始」で始まります。':c.cpu?`あと${need}人まで入れます。空いた枠は CPU が入るので、今すぐ始めることもできます。`:`あと${need}人必要です。サーバー名「${NET.srv?NET.srv.name:''}」を伝えてください。`)
+    :!hp?'ホストを探しています…':ids.has(NET.id)?'ホストの「試合開始」を待っています。':`${modeLabel(c)}は${cap}人までです。観戦として入っています。`;
+  return{rows,note:note_,canStart:NET.role==='h'&&(humans>=Math.min(2,cap)||c.cpu)&&(humans>=cap||c.cpu)};
+}
+function renderWaitCfg(){
+  const c=lobbyCfg(), box=$('waitCfg'); if(!c){box.hidden=true;return} box.hidden=false;
+  $('wcModeT').textContent=modeLabel(c); $('wcMapT').textContent=MAPS[c.map].name;
+  $('wcMode').disabled=$('wcMap').disabled=NET.role!=='h';
+  const ro=lobbyRo(), me=ro.find(r=>r[0]===NET.id); $('wcTeam').hidden=c.m!=='team'||!me; if(me&&c.m==='team')$('wcTeamT').textContent=`${SIDEC[1-me[1]].jp}チームへ`;
+}
+
 let selLv=Math.min(lvData.open,15);
 function lvColor(lv){const h=lv<=10?150-(lv-1)*16.6:360-(lv-10)*15;return `hsl(${h.toFixed(0)} 78% 56%)`}
 function renderLevels(){
@@ -3522,7 +4335,7 @@ document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',b
 const GFX_NAME={hi:'高',mid:'中',lo:'低'};
 const fx2=v=>'×'+(+v.toFixed(2)), onoff=v=>v?'ON':'OFF';
 const GFX_ROWS=[['ゲーム画面',{hi:'実物そっくりの3D',mid:'2D',lo:'2D単色'}],['シェーダー（動く光・反射）',{hi:'ON',mid:'OFF',lo:'OFF'}],['衝撃波の歪み・残像ブラー',{hi:'ON',mid:'OFF',lo:'OFF'}],['ゲーム中の光のにじみ',{hi:'ON',mid:'OFF',lo:'OFF'}],['3D確定演出',{hi:'フル',mid:'標準',lo:'軽量'}],['3Dの光のにじみ',{hi:'ON',mid:'ON',lo:'OFF'}],['被写界深度ボケ',q=>onoff(q.bokeh)],
-  ['色調・粒子・色ずれ',{hi:'ON',mid:'ON',lo:'OFF'}],['火花・紙吹雪',{hi:DEV.and?'100%':'140%',mid:'55%',lo:'30%'}],['ほこり・会場の灯り',q=>onoff(q.dust)],['盤面・レールの作り込み',{hi:'細部まで',mid:'標準',lo:'単色'}],['影',q=>q.shadow>1?'2灯·高精細':q.shadow?(q.shadowRes<1024?'1灯·軽量':'1灯'):'OFF'],
+  ['色調・粒子・色ずれ',{hi:'ON',mid:'ON',lo:'OFF'}],['火花・紙吹雪',{hi:'60%',mid:'35%',lo:'15%'}],['画面の揺れ',{hi:'弱',mid:'わずか',lo:'OFF'}],['ほこり・会場の灯り',q=>onoff(q.dust)],['画面切り替えの動き',{hi:'軽め',mid:'フェードのみ',lo:'フェードのみ'}],['盤面・レールの作り込み',{hi:'細部まで',mid:'標準',lo:'単色'}],['影',q=>q.shadow>1?'2灯·高精細':q.shadow?(q.shadowRes<1024?'1灯·軽量':'1灯'):'OFF'],
   ['描画解像度',q=>fx2(q.real?q.pr3:q.cv2)],['描くコマ数',q=>q.real&&q.cap3?'60fps':'画面に合わせる'],['残像・背景ぼかし',{hi:'ON',mid:'ON',lo:'OFF'}]];
 function cfgLabel(){document.querySelectorAll('[data-cfg]').forEach(s=>s.textContent=`SETTINGS · 音量・画質 ${GFX_NAME[gfx]}`)}
 function renderGfxList(){const ul=$('gfxList'),q=gqFor(gfx);ul.textContent='';for(const [n,v] of GFX_ROWS){const a=document.createElement('span'),b=document.createElement('b'),t=typeof v==='function'?v(q):v[gfx];a.textContent=n;b.textContent=t;b.className=t==='OFF'?'off':'';ul.append(a,b)}
@@ -3597,7 +4410,7 @@ let last=performance.now();
 let swArm=true, pSide=null, msE=0;
 function tick(dt){
   cineTick(dt); tickBT(dt);
-  if(state==='play'){msE+=(Math.hypot(you.vx,you.vy)-msE)*(1-Math.exp(-dt*14));const ms=msE;if(ms<1.6)swArm=true;else if(swArm&&ms>3.4){swArm=false;sfx.swish(ms,you.x)}
+  if(state==='play'&&!PT.on){msE+=(Math.hypot(you.vx,you.vy)-msE)*(1-Math.exp(-dt*14));const ms=msE;if(ms<1.6)swArm=true;else if(swArm&&ms>3.4){swArm=false;sfx.swish(ms,you.x)}
     const side=puck.y<L/2,sp=Math.hypot(puck.vx,puck.vy);if(pSide!==null&&side!==pSide&&sp>5.5&&!(NET.mode==='online'&&NET.hidden))sfx.pass(sp,puck.x,puck.vy>0);pSide=side}else pSide=null;
   bgm.setMode(state==='menu'||state==='over'||(NET.mode==='online'&&!inMatch())?'menu':(score.you===WIN-1||score.cpu===WIN-1)?'tense':'play');
   bgm.muffle(state==='pause'||(cur==='pause'));
