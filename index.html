@@ -4,10 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0b0d10">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>リンク・エアホッケー</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
 <style>
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 [hidden]{display:none!important}
@@ -462,7 +466,7 @@ body.gfx-mid .bump,body.gfx-lo .bump{animation:none}
       <div class="field st"><span class="flabel">MUSIC<b>音楽の音量 · ローファイ 88BPM</b></span>
         <div class="vol"><span class="spk mus" aria-hidden="true"></span><div class="vslider volS" id="musVol" role="slider" tabindex="0" aria-label="音楽の音量" aria-valuemin="0" aria-valuemax="100"><span class="vfill"></span><span class="vthumb"></span></div><b class="vnum" id="musVolTxt">70</b></div></div>
       <div class="field st"><span class="flabel" id="gfxLbl">GRAPHICS<b id="gfxRec">グラフィック</b></span>
-        <div class="segi" id="gfxSeg" role="radiogroup" aria-labelledby="gfxLbl"><span class="thumb" aria-hidden="true"></span><button type="button" role="radio" data-v="hi">高</button><button type="button" role="radio" data-v="mid">中</button><button type="button" role="radio" data-v="lo">低</button></div>
+        <div class="segi n4" id="gfxSeg" role="radiogroup" aria-labelledby="gfxLbl"><span class="thumb" aria-hidden="true"></span><button type="button" role="radio" data-v="ultra">最高</button><button type="button" role="radio" data-v="hi">高</button><button type="button" role="radio" data-v="mid">中</button><button type="button" role="radio" data-v="lo">低</button></div>
         <div class="gfxList" id="gfxList" aria-live="polite"></div>
         <button type="button" class="sw" id="autoGfx" role="switch" aria-checked="true"><span class="swt"><b>重いときは自動で軽くする</b><small>なめらかさを保つため、3Dの解像度→画質の段階の順に下げます</small></span><i aria-hidden="true"></i></button></div>
       <p class="hint st" id="fpsNote"><i></i><span>計測中…</span></p>
@@ -530,6 +534,7 @@ body.gfx-mid .bump,body.gfx-lo .bump{animation:none}
       <div class="field st"><span class="flabel">BY NAME<b>名前で参加</b></span>
         <div class="inline"><input class="inp" id="joinName" maxlength="20" placeholder="サーバー名" enterkeyhint="go"><button class="cta small blue" type="button" id="joinBtn">参加</button></div></div>
       <p class="note st" id="joinNote" aria-live="polite"></p>
+      <p class="log st" id="netLog4"></p>
     </div>
   </section>
 
@@ -628,6 +633,9 @@ body.gfx-mid .bump,body.gfx-lo .bump{animation:none}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
+try{const lf=document.createElement('link');lf.rel='stylesheet';lf.href='https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap';(document.head||document.documentElement).appendChild(lf)}catch(e){} // 文字は後から読み込む（回線が悪くても先に遊べる）
+// GitHub Pages などに置いたときは、一度開けば電波が弱くても開けるよう端末に保存する（sw.js を同じ場所に置いた場合）
+try{if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')&&window.top===window&&!/claude\.ai|claudeusercontent|anthropic/.test(location.hostname))window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}catch(e){}
 const stage=$('stage'), cv=$('cv'), ctx=cv.getContext('2d');
 const RM=matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -673,18 +681,20 @@ const DEV=(()=>{const ua=navigator.userAgent||'',and=/Android/i.test(ua),ios=/iP
   const short=(gpu.replace(/\s*\(TM\)/gi,'').match(/(Adreno[^,)]*?\d{3}|Mali-[GT]\d+|Immortalis-G\d+|Xclipse \d+|PowerVR[^,)]*|Apple GPU)/i)||[''])[0];
   return {and,ios,mob,gpu,short,mem,cores,tier}})();
 document.documentElement.classList.toggle('dev-and',DEV.and);
-const GRANK={lo:0,mid:1,hi:2}, TIER_GFX=['lo','mid','hi'];
+const GRANK={lo:0,mid:1,hi:2,ultra:3}, TIER_GFX=['lo','mid','hi'];
 const GFX={
+  ultra:{pr3:3,post:true,bloom:true,bokeh:true,shadow:2,shadowRes:4096,spark:1,conf:1,dust:true,shakeK:.5,cv2:3,cineDpr:3,spark2:1.1,trail:true,ovl:true,detail:true,glfx:true,real:true,ultra:true,msaa:true,refl:true,ssao:true,ghost:true},
   hi:{pr3:2,post:true,bloom:true,bokeh:true,shadow:2,shadowRes:2048,spark:.6,conf:.6,dust:true,shakeK:.5,cv2:2.5,cineDpr:2,spark2:.8,trail:true,ovl:true,detail:true,glfx:true,real:true},
   mid:{pr3:1,post:true,bloom:true,bokeh:false,shadow:1,shadowRes:1024,spark:.35,conf:.35,dust:false,shakeK:.25,cv2:2,cineDpr:1.5,spark2:.4,trail:true,ovl:true,simple:true},
   lo:{pr3:.75,post:false,bloom:false,bokeh:false,shadow:0,spark:.15,conf:.2,dust:false,shakeK:0,cv2:1.5,cineDpr:1,spark2:0,trail:false,ovl:false,flat:true}};
 // 段階の設定に端末ごとの上限をかけたもの（スマホは解像度を抑え、3D は 60fps で描く。Android はさらに影・ボケ・重ねる効果を減らす）
 function gqFor(lv){const q=Object.assign({},GFX[lv]);
-  if(DEV.mob){q.pr3=Math.min(q.pr3,DEV.ios?2:1.5);q.cineDpr=Math.min(q.cineDpr,DEV.ios?2:1.5);q.cv2=Math.min(q.cv2,2)}
-  if(DEV.and){q.glfx=false;q.cap3=60;q.cineDpr=Math.min(q.cineDpr,lv==='hi'?1.5:lv==='mid'?1.2:1);q.cv2=Math.min(q.cv2,q.real?1.5:lv==='lo'?1.25:1.75);
+  const U=lv==='ultra';
+  if(DEV.mob){q.pr3=Math.min(q.pr3,U?(DEV.ios?3:2):(DEV.ios?2:1.5));q.cineDpr=Math.min(q.cineDpr,U?(DEV.ios?3:2):(DEV.ios?2:1.5));q.cv2=Math.min(q.cv2,U?(DEV.ios?3:2.5):2)}
+  if(DEV.and){q.glfx=false;q.cap3=U?0:60;q.cineDpr=Math.min(q.cineDpr,U?2:lv==='hi'?1.5:lv==='mid'?1.2:1);q.cv2=Math.min(q.cv2,U?2.5:q.real?1.5:lv==='lo'?1.25:1.5);if(U)q.shadowRes=2048;
     if(lv==='hi'){q.shadow=Math.min(q.shadow,1);q.shadowRes=1024;q.spark=Math.min(q.spark,.8);q.spark2=Math.min(q.spark2,1);if(DEV.tier<2){q.bokeh=false;q.pr3=1.25}}
     if(lv==='mid'){q.shadowRes=512;q.dust=false}}
-  q.maxPx=(DEV.and?[.9e6,1.3e6,1.6e6]:DEV.mob?[1.4e6,2.4e6,2.8e6]:[2.4e6,4e6,5.2e6])[GRANK[lv]]; // 描く画素数の上限（タブレットや大きな画面でも重くならない）
+  q.maxPx=(DEV.and?[.9e6,1.3e6,1.6e6,3.2e6]:DEV.mob?[1.4e6,2.4e6,2.8e6,5.5e6]:[2.4e6,4e6,5.2e6,9.5e6])[GRANK[lv]]; // 描く画素数の上限（タブレットや大きな画面でも重くならない）
   return q}
 const pxCap=(pr,w,h,mx)=>Math.max(.5,Math.min(pr,Math.sqrt(mx/Math.max(1,w*h))));
 try{const s=JSON.parse(localStorage.getItem('ah-prefs')||'{}');if(DIFF_K[s.diff]!==undefined)diff=s.diff;const v01=v=>Math.min(1,Math.max(0,v));
@@ -692,9 +702,12 @@ try{const s=JSON.parse(localStorage.getItem('ah-prefs')||'{}');if(DIFF_K[s.diff]
   if(typeof s.musVol==='number')musVol=v01(s.musVol);else if(s.music===false)musVol=0;
   if(GFX[s.gfx])gfx=s.gfx;gfxSet=s.gs===true;if(typeof s.aa==='boolean')autoGfx=s.aa;if(['auto','room','p2p','relay','peer'].includes(s.method))method=s.method}catch(e){}
 if(!gfxSet&&GRANK[gfx]>DEV.tier) gfx=TIER_GFX[DEV.tier]; // まだ自分で選んでいなければ、この端末のおすすめから始める
+try{const s0=JSON.parse(localStorage.getItem('ah-prefs')||'{}');if(DEV.and&&!((s0.av|0)>=21)){gfx='lo';gfxSet=false;autoGfx=true}}catch(e){} // Android：起動時は軽い「低」（60fps）から
+if(DEV.and&&!gfxSet) gfx='lo';
 let soundOn=sfxVol>.001, musicOn=musVol>.001, GQ=gqFor(gfx);
 const sfxGain=()=>sfxVol*sfxVol/.64, musGain=()=>musVol*musVol/.49; // 聴感に合わせて二乗。初期値で従来と同じ大きさ
-const savePrefs=()=>{try{localStorage.setItem('ah-prefs',JSON.stringify({diff,sfxVol,musVol,gfx,method,gs:gfxSet,aa:autoGfx}))}catch(e){}};
+const savePrefs=()=>{try{localStorage.setItem('ah-prefs',JSON.stringify({diff,sfxVol,musVol,gfx,method,gs:gfxSet,aa:autoGfx,av:21}))}catch(e){}};
+if(DEV.and) savePrefs();
 let myNameV=''; try{myNameV=cleanName(localStorage.getItem('ah-name')||'')}catch(e){}
 if(!myNameV) myNameV='プレイヤー'+Math.floor(100+Math.random()*900);
 const myName=()=>myNameV;
@@ -1480,7 +1493,7 @@ function loadThree(){
   const list=['https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',ex+'shaders/CopyShader.js',ex+'shaders/LuminosityHighPassShader.js',ex+'postprocessing/EffectComposer.js',ex+'postprocessing/RenderPass.js',ex+'postprocessing/ShaderPass.js',ex+'postprocessing/UnrealBloomPass.js',ex+'shaders/BokehShader.js',ex+'postprocessing/BokehPass.js'];
   (async()=>{
     for(let i=0;i<list.length;i++){try{if(!(i===0&&window.THREE))await loadJS(list[i])}catch(e){if(i===0){T3.st='fail';return}}}
-    const go_=()=>{try{t3Build();T3.st='ready';setTimeout(()=>(window.requestIdleCallback||setTimeout)(t3Warm,{timeout:1200}),50)}catch(e){console.warn('3D cinematic unavailable',e);T3.st='fail'}};
+    const go_=()=>{try{t3Build();T3.st='ready';if(GQ.ultra)try{ulApply(GQ)}catch(e){console.warn(e)}setTimeout(()=>(window.requestIdleCallback||setTimeout)(t3Warm,{timeout:1200}),50)}catch(e){console.warn('3D cinematic unavailable',e);T3.st='fail'}};
     (window.requestIdleCallback||setTimeout)(go_,{timeout:1500});
   })();
 }
@@ -1553,7 +1566,7 @@ function t3Build(){
   const fc=document.createElement('canvas'); fc.width=1024; fc.height=Math.round(1024*L/W); drawField(fc.getContext('2d'),fc.width/W);
   const ft=new THREE.CanvasTexture(fc); ft.encoding=THREE.sRGBEncoding; ft.anisotropy=Math.min(DEV.mob?4:16,r.capabilities.getMaxAnisotropy());
   const fg=new THREE.BufferGeometry(); fg.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,W,0,0,W,0,L,0,0,L],3)); fg.setAttribute('uv',new THREE.Float32BufferAttribute([0,1,1,1,1,0,0,0],2)); fg.setIndex([0,3,2,0,2,1]); fg.computeVertexNormals();
-  const field=new THREE.Mesh(fg,new THREE.MeshPhysicalMaterial({map:ft,roughness:.34,metalness:0,clearcoat:.5,clearcoatRoughness:.22,envMapIntensity:.24})); field.receiveShadow=true; scene.add(field);
+  const field=T3.field=new THREE.Mesh(fg,new THREE.MeshPhysicalMaterial({map:ft,roughness:.34,metalness:0,clearcoat:.5,clearcoatRoughness:.22,envMapIntensity:.24})); field.receiveShadow=true; scene.add(field);
   // レール（ゴール口の切り欠き付き）
   const sh=new THREE.Shape(), R0=CR+RAIL*.8, x0=-RAIL, y0=-RAIL, x1=W+RAIL, y1=L+RAIL;
   sh.moveTo(x0+R0,y0); sh.lineTo(x1-R0,y0); sh.absarc(x1-R0,y0+R0,R0,-Math.PI/2,0); sh.lineTo(x1,y1-R0); sh.absarc(x1-R0,y1-R0,R0,0,Math.PI/2); sh.lineTo(x0+R0,y1); sh.absarc(x0+R0,y1-R0,R0,Math.PI/2,Math.PI); sh.lineTo(x0,y0+R0); sh.absarc(x0+R0,y0+R0,R0,Math.PI,Math.PI*1.5);
@@ -1649,6 +1662,7 @@ function t3Size(){ // 縦長のスマホでも横長のシネマスコープ帯�
   Object.values(T3.mc).concat([T3.puck]).forEach(g=>g.traverse(o=>{const m=o.material;if(m&&m.userData&&m.userData.env0!=null)m.envMapIntensity=m.userData.env0}));
   T3.r.setPixelRatio(pr); T3.r.setSize(w,h,false); T3.cam.aspect=w/h; T3.cam.near=.004; T3.cam.far=40; T3.cam.updateProjectionMatrix();
   if(T3.composer){T3.composer.setPixelRatio(pr);T3.composer.setSize(w,h);if(T3.bokehPass)T3.bokehPass.uniforms.aspect.value=w/h}
+  ulResize(); if(UL.ghosts)UL.ghosts.forEach(g=>g.visible=false);
 }
 function hfov(cam,deg){cam.fov=Math.max(24,2*Math.atan(Math.tan(deg*Math.PI/360)/cam.aspect)*180/Math.PI)}
 const CPU_SKIN={pat:'classic',body:'#3a7ff0',knob:'#3a7ff0',line:'#ffffff',gloss:.6};
@@ -1658,6 +1672,77 @@ function t3GetM(role,sk,sg){ // マレットは作り置き（打った瞬間に
     const ks=Object.keys(mc);if(ks.length>6){const old=ks.find(x=>x!==k&&mc[x]!==T3.hitM&&mc[x]!==T3.othM);if(old){mc[old].traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose()}});delete mc[old]}}}
   return mc[k];
 }
+/* ===== 最高画質（重い処理）：床への映り込み・SSAO（物の接地の陰）・MSAA・4Kの影・パックの残像・高解像度の盤面・ほこり増量 ===== */
+const UL={st:'idle',refl:null,ssao:null,aoMat:null,msaa:false,ghosts:null,dust2:null,fres:1024,keyRes:1024};
+function loadUltra(){
+  if(UL.st!=='idle'||!window.THREE) return; UL.st='loading';
+  const ex='https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/';
+  (async()=>{try{for(const f of ['math/SimplexNoise.js','shaders/SSAOShader.js','postprocessing/SSAOPass.js','objects/Reflector.js'])await loadJS(ex+f);UL.st='ready';
+    if(GQ.ultra&&T3.st==='ready'){t3ApplyGfx();T3.w=0;if(!cine.on){t3Size();if(R3.on){R3.w=0;r3Layout(true)}}}}catch(e){console.warn('ultra',e);UL.st='fail'}})();
+}
+function ulApply(q){
+  const T=T3.THREE, r=T3.r; if(!T||!r) return; const on=!!q.ultra;
+  if(on&&UL.st==='idle') loadUltra();
+  // MSAA：輪郭のギザギザを4倍のサンプルで消す（WebGL2・浮動小数の描画先が使える端末だけ）
+  const wantMS=!!(on&&q.msaa&&T3.composer&&r.capabilities.isWebGL2&&T.WebGLMultisampleRenderTarget&&r.extensions.has('EXT_color_buffer_float'));
+  if(T3.composer&&wantMS!==UL.msaa){UL.msaa=wantMS;const opt={type:r.capabilities.isWebGL2?T.HalfFloatType:T.UnsignedByteType};
+    const rt=wantMS?new T.WebGLMultisampleRenderTarget(16,16,opt):new T.WebGLRenderTarget(16,16,opt); if(wantMS) rt.samples=4;
+    T3.composer.reset(rt); T3.w=0; R3.w=0}
+  // 盤面の解像度
+  const fr=on?2048:1024; if(T3.field&&UL.fres!==fr){UL.fres=fr;const fc=document.createElement('canvas');fc.width=fr;fc.height=Math.round(fr*L/W);drawField(fc.getContext('2d'),fc.width/W);
+    const tx=new T.CanvasTexture(fc);tx.encoding=T.sRGBEncoding;tx.anisotropy=r.capabilities.getMaxAnisotropy();const old=T3.field.material.map;T3.field.material.map=tx;T3.field.material.needsUpdate=true;if(old)old.dispose()}
+  // 補助ライトの影も高精細に
+  const kr=on?2048:1024; if(T3.key&&UL.keyRes!==kr){UL.keyRes=kr;T3.key.shadow.mapSize.set(kr,kr);if(T3.key.shadow.map){T3.key.shadow.map.dispose();T3.key.shadow.map=null}}
+  // ほこりを増やす
+  if(on&&!UL.dust2){const n=1400,p=new Float32Array(n*3);for(let i=0;i<n;i++){const a=Math.random()*6.283,rr=Math.sqrt(Math.random())*1.2;p[i*3]=W/2+Math.cos(a)*rr;p[i*3+1]=.01+Math.random()*1.6;p[i*3+2]=L/2+Math.sin(a)*rr*1.3}
+    const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(p,3));UL.dust2=new T.Points(g,new T.PointsMaterial({size:.0035,map:softTex(T,'rgba(255,245,225,1)','rgba(255,245,225,0)'),transparent:true,opacity:.45,depthWrite:false,blending:T.AdditiveBlending,color:0xfff3e0}));T3.scene.add(UL.dust2)}
+  if(UL.dust2) UL.dust2.visible=on&&!!q.dust;
+  // パックの残像（モーションブラー）
+  if(on&&!UL.ghosts){UL.ghosts=[];for(let i=0;i<6;i++){const gp=new T.Group();T3.puck.children.slice(0,2).forEach(c=>{const m=c.clone();m.material=c.material.clone();m.material.transparent=true;m.material.depthWrite=false;m.material.opacity=.3*(1-i/6);m.castShadow=false;gp.add(m)});gp.visible=false;T3.scene.add(gp);UL.ghosts.push(gp)}}
+  if(UL.st!=='ready') return;
+  // 床への映り込み：鏡に映した景色を別に描いて、テーブルのつやとして足す（場面をもう一度描く重い処理）
+  if(on&&q.refl&&!UL.refl&&T.Reflector){
+    const sh={uniforms:{color:{value:null},tDiffuse:{value:null},textureMatrix:{value:null},uOp:{value:.62}},
+      vertexShader:'uniform mat4 textureMatrix;varying vec4 vUv;varying vec3 vW;void main(){vUv=textureMatrix*vec4(position,1.0);vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
+      fragmentShader:'uniform sampler2D tDiffuse;uniform float uOp;varying vec4 vUv;varying vec3 vW;void main(){vec3 V=normalize(cameraPosition-vW);float fr=.18+.82*pow(1.0-clamp(V.y,0.0,1.0),4.0);vec2 uv=vUv.xy/vUv.w;vec2 d=vec2(.0011);'+
+        'vec3 c=texture2D(tDiffuse,uv).rgb*.36+(texture2D(tDiffuse,uv+d).rgb+texture2D(tDiffuse,uv-d).rgb+texture2D(tDiffuse,uv+vec2(d.x,-d.y)).rgb+texture2D(tDiffuse,uv+vec2(-d.x,d.y)).rgb)*.16;gl_FragColor=vec4(c*uOp*fr,1.0);}'};
+    const rf=new T.Reflector(new T.PlaneGeometry(W,L),{clipBias:.002,textureWidth:512,textureHeight:1024,color:0xffffff,shader:sh});
+    rf.material.transparent=true; rf.material.depthWrite=false; rf.material.blending=T.AdditiveBlending; rf.material.toneMapped=false;
+    rf.rotation.x=-Math.PI/2; rf.position.set(W/2,.0006,L/2); rf.renderOrder=2; T3.scene.add(rf); UL.refl=rf; ulResize();
+    if(T3.bokehPass&&!T3.bokehPass._ul){const o=T3.bokehPass.render;T3.bokehPass._ul=1;T3.bokehPass.render=function(...a){const v=rf.visible;rf.visible=false;o.apply(this,a);rf.visible=v}}
+  }
+  if(UL.refl) UL.refl.visible=on&&!!q.refl;
+  // 天井の照明（直接は画面に入らない高さ）。つやのある盤面に細長い光の筋として映り込む
+  if(on&&!UL.lamps){UL.lamps=new T.Group();const lm=new T.MeshBasicMaterial({color:new T.Color(5,4.7,4.2),toneMapped:false});lm.userData.hdr=true;
+    for(const x of [-.34,0,.34]){const m=new T.Mesh(new T.BoxGeometry(.035,.012,L*1.15),lm);m.position.set(W/2+x,2.1,L*.5);UL.lamps.add(m)}
+    const hm=new T.MeshBasicMaterial({color:new T.Color(.12,.13,.15)});for(const x of [-.34,0,.34]){const h=new T.Mesh(new T.BoxGeometry(.06,.02,L*1.18),hm);h.position.set(W/2+x,2.115,L*.5);UL.lamps.add(h)}
+    T3.scene.add(UL.lamps)}
+  if(UL.lamps) UL.lamps.visible=false; // 直接は描かず、映り込みを描くときだけ出す
+  if(UL.refl&&UL.lamps&&!UL.refl._lamp){UL.refl._lamp=1;const ob=UL.refl.onBeforeRender;UL.refl.onBeforeRender=function(...a){UL.lamps.visible=true;try{ob.apply(this,a)}finally{UL.lamps.visible=false}}}
+  // SSAO：物どうしが接する所の陰を、画面の奥行きから計算する（法線をもう一度描く重い処理）
+  if(on&&q.ssao&&!UL.ssao&&T3.composer&&T.SSAOPass){
+    const p=new T.SSAOPass(T3.scene,T3.cam,16,16); p.kernelRadius=.045; p.minDistance=.00001; p.maxDistance=.004;
+    if(r.capabilities.isWebGL2) p.normalRenderTarget.depthTexture.type=T.UnsignedIntType;
+    const ss=p.setSize.bind(p); p.setSize=(w,h)=>{ss(w,h);p.beautyRenderTarget.setSize(1,1)};
+    UL.aoMat=new T.ShaderMaterial({uniforms:{tDiffuse:{value:null},tAO:{value:null},uStr:{value:1.0}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+      fragmentShader:'uniform sampler2D tDiffuse,tAO;uniform float uStr;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float ao=texture2D(tAO,vUv).r;gl_FragColor=vec4(c.rgb*mix(1.0,ao,uStr),c.a);}',depthTest:false,depthWrite:false});
+    p.render=function(renderer,writeBuffer,readBuffer){ // 自分で描いた結果（MSAA 済み）に陰だけを掛ける
+      const cam=this.camera,u=this.ssaoMaterial.uniforms;u.cameraNear.value=cam.near;u.cameraFar.value=cam.far;u.cameraProjectionMatrix.value.copy(cam.projectionMatrix);u.cameraInverseProjectionMatrix.value.copy(cam.projectionMatrixInverse);
+      u.kernelRadius.value=this.kernelRadius;u.minDistance.value=this.minDistance;u.maxDistance.value=this.maxDistance;
+      const hid=[];this.scene.traverse(o=>{if(o.visible&&(o.isPoints||o.isLine||o.isSprite||o===UL.refl||(o.material&&(o.material.transparent||o.material.isShaderMaterial||o.material.isMeshBasicMaterial)))){hid.push(o);o.visible=false}});
+      this.renderOverride(renderer,this.normalMaterial,this.normalRenderTarget,0x7777ff,1.0); hid.forEach(o=>o.visible=true);
+      this.renderPass(renderer,this.ssaoMaterial,this.ssaoRenderTarget); this.renderPass(renderer,this.blurMaterial,this.blurRenderTarget);
+      UL.aoMat.uniforms.tDiffuse.value=readBuffer.texture; UL.aoMat.uniforms.tAO.value=this.blurRenderTarget.texture; this.renderPass(renderer,UL.aoMat,this.renderToScreen?null:writeBuffer);
+    };
+    T3.composer.insertPass(p,1); UL.ssao=p; T3.w=0; R3.w=0;
+  }
+  if(UL.ssao) UL.ssao.enabled=on&&!!q.ssao;
+}
+function ulResize(){if(!UL.refl||!T3.r)return;const s=T3.r.getDrawingBufferSize(new T3.THREE.Vector2());UL.refl.getRenderTarget().setSize(Math.max(64,Math.round(s.x*.5)),Math.max(64,Math.round(s.y*.5)))}
+function ulGhosts(hid){ // 速いパックの残像
+  if(!UL.ghosts) return; const on=GQ.ultra&&!hid, sp=Math.hypot(puck.vx,puck.vy)*PK;
+  UL.ghosts.forEach((g,i)=>{g.visible=on&&sp>2.5;if(!g.visible)return;const k=(i+1)*.0075*Math.min(1.6,sp/6);g.position.set(puck.x-puck.vx*PK*k,T3.puck.position.y,puck.y-puck.vy*PK*k);g.rotation.y=-puck.a})}
+
 function t3ApplyGfx(){
   const q=GQ; T3.sn=Math.round(T3.SN*q.spark); T3.cn=Math.round(T3.CN*q.conf); T3.sparks.count=T3.sn; T3.conf.count=T3.cn;
   if(T3.bokehPass)T3.bokehPass.enabled=q.bokeh; if(T3.bloom)T3.bloom.enabled=q.bloom;
@@ -1666,6 +1751,7 @@ function t3ApplyGfx(){
   T3.dust.visible=q.dust; T3.beam.visible=q.dust; T3.bokeh.forEach(b=>b.visible=q.dust);
   const upd=o=>{if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true)};
   T3.scene.traverse(upd); Object.values(T3.mc).forEach(m=>m.traverse(upd));
+  try{ulApply(q)}catch(e){console.warn('ultra',e)}
 }
 // 演出が始まる前に、使うシェーダーとマレットを全部準備しておく（3%を引いた瞬間に固まらないように）
 function t3Prep(){
@@ -1691,8 +1777,8 @@ function t3Warm(){
   r3Apply(); if(R3.on){R3.w=0;r3Layout(true)}
 }
 function applyGfx(){
-  const lvCh=GQ&&GQ._lv!==gfx; GQ=gqFor(gfx); GQ._lv=gfx; gfxChT=performance.now(); document.body.classList.toggle('gfx-hi',gfx==='hi'); if(lvCh&&T3.st==='ready')T3.dyn=1; // 段階が変わったら3Dの解像度の自動調整もやり直す document.body.classList.toggle('gfx-lo',gfx==='lo'); document.body.classList.toggle('gfx-mid',gfx==='mid');
-  resize(); fxApply(); if(cine.on) sizeCine();
+  const lvCh=GQ&&GQ._lv!==gfx; GQ=gqFor(gfx); GQ._lv=gfx; gfxChT=performance.now(); document.body.classList.toggle('gfx-hi',gfx==='hi'||gfx==='ultra'); if(lvCh&&T3.st==='ready')T3.dyn=1; // 段階が変わったら3Dの解像度の自動調整もやり直す document.body.classList.toggle('gfx-lo',gfx==='lo'); document.body.classList.toggle('gfx-mid',gfx==='mid');
+  resize(); fxApply(); if(cine.on) sizeCine(); if(T3.st==='idle'&&typeof want3D==='function'&&want3D()&&performance.now()>3000) loadThree();
   if(T3.st==='ready'&&!cine.on){t3ApplyGfx();T3.w=0;t3Size();setTimeout(t3Warm,80)}
   r3Apply();
 }
@@ -2383,7 +2469,7 @@ function r3Layout(force){
   const r=stage.getBoundingClientRect(), w=Math.max(1,Math.round(r.width)), h=Math.max(1,Math.round(r.height)), pr=pxCap(Math.min(window.devicePixelRatio||1,GQ.pr3),w,h,GQ.maxPx)*(T3.dyn||1), c=T3.cv3;
   c.hidden=false; c.style.opacity='1'; c.style.left=r.left+'px'; c.style.top=r.top+'px'; c.style.width=w+'px'; c.style.height=h+'px'; c.style.zIndex='1';
   if(force||R3.w!==w||R3.h!==h||R3.pr!==pr){R3.w=w;R3.h=h;R3.pr=pr;T3.r.setPixelRatio(pr);T3.r.setSize(w,h,false);T3.cam.aspect=w/h;
-    if(T3.composer){T3.composer.setPixelRatio(pr);T3.composer.setSize(w,h)} T3.w=0; r3Fit()}
+    if(T3.composer){T3.composer.setPixelRatio(pr);T3.composer.setSize(w,h)} T3.w=0; r3Fit(); ulResize()}
   r3Scene();
 }
 // カメラ：自分のゴールの後ろ、上から見下ろす。リンク全体がちょうど収まる距離を探す
@@ -2462,7 +2548,8 @@ function r3Render(dt){
   const cam=T3.cam; cam.position.copy(R3.base); const sh=RM.matches?0:shakeA;
   if(sh>.01){cam.position.x+=(Math.random()-.5)*sh*.025;cam.position.y+=(Math.random()-.5)*sh*.012;cam.position.z+=(Math.random()-.5)*sh*.02}
   cam.lookAt(R3.tg);
-  if(T3.composer&&GQ.post){const f=T3.fin.uniforms;f.uT.value=R3.t;f.uCA.value=.0012+FX.hit*.006;if(T3.bloom)T3.bloom.strength=.55+(sup?.35:0)+gk*.6;T3.composer.render()}
+  ulGhosts(hid);
+  if(T3.composer&&GQ.post){const f=T3.fin.uniforms;f.uT.value=R3.t;f.uCA.value=.0012+FX.hit*.006;if(T3.bloom)T3.bloom.strength=.55+(GQ.ultra?.2:0)+(sup?.35:0)+gk*.6;T3.composer.render()}
   else T3.r.render(T3.scene,cam);
 }
 // 3Dの上に重ねる2Dの層：金色の軌跡・進む向きのガイド・閃光・指示の文字
@@ -2753,7 +2840,7 @@ function render(dt,now){
 function fpsUi(){
   const f=Math.round(fpsE), now=performance.now(), capped=DEV.ios&&f>=26&&f<=34; // iPhone の低電力モード（30fps 固定）は重さではないので下げない
   if(cur==='settings'){const el=$('fpsNote'),c=f>=55?'#3fbf86':f>=38?'#f4c534':'#ee4631';el.style.setProperty('--lv',Math.min(100,f/60*100)+'%');el.style.setProperty('--lc',c);
-    el.querySelector('span').textContent=`いまの描画 ${f} fps · ${capped?'30fpsに制限中：iPhoneの低電力モードがオンだと30fps（操作と計算は120回/秒で動いています）':f>=55?'なめらか':gfx==='lo'?'これ以上は軽くできません':f>=38?`少し重い：「${gfx==='hi'?'中':'低'}」がおすすめ`:`重い：「${gfx==='hi'?'中':'低'}」がおすすめ`}`}
+    el.querySelector('span').textContent=`いまの描画 ${f} fps · ${capped?'30fpsに制限中：iPhoneの低電力モードがオンだと30fps（操作と計算は120回/秒で動いています）':f>=55?'なめらか':gfx==='lo'?'これ以上は軽くできません':f>=38?`少し重い：「${gfx==='ultra'?'高':gfx==='hi'?'中':'低'}」がおすすめ`:`重い：「${gfx==='ultra'?'高':gfx==='hi'?'中':'低'}」がおすすめ`}`}
   // 下げる切り替え（シェーダーの準備で一瞬止まる）は、試合中ではなく得点のあとなどの区切りで行う
   if(R3.dynPend&&state!=='play'&&!cine.on){const d=R3.dynPend;R3.dynPend=0;if(T3.st==='ready'&&d!==T3.dyn){T3.dyn=d;if(R3.on)r3Layout(true)}}
   if(gfxPend&&state!=='play'&&!cine.on&&cur!=='settings'){const nv=gfxPend;gfxPend=null;if(GRANK[nv]<GRANK[gfx]){gfx=nv;savePrefs();applyGfx();toast(`動きが重いので、グラフィックを自動で「${GFX_NAME[nv]}」に下げました（設定で変えられます）`)}return}
@@ -2764,7 +2851,7 @@ function fpsUi(){
     if(d1!==d0){if(state==='play')R3.dynPend=d1;else{T3.dyn=d1;R3.dynPend=0;r3Layout(true)}}}
   slowT=f<40?slowT+.5:Math.max(0,slowT-.5);
   if(slowT>=3.5&&gfx!=='lo'&&(!R3.on||(R3.dynPend||T3.dyn||1)<=.62)){slowT=0; // 解像度を下げきってもまだ重いときは、段階を1つ下げる
-    const nv=gfx==='hi'?'mid':'lo';
+    const nv=gfx==='ultra'?'hi':gfx==='hi'?'mid':'lo';
     if(autoGfx) gfxPend=nv;
     else if(!slowTold){slowTold=true;toast(`動きが重いようです。設定のグラフィックを「${GFX_NAME[nv]}」にすると軽くなります`)}}
 }
@@ -2830,7 +2917,7 @@ function keyMove(){
 }
 
 /* ===================================================================
-   オンライン：claude.ai ルーム / MQTT中継（公開ブローカー15か所）/ PeerJS（WebRTC）
+   オンライン：claude.ai ルーム / MQTT中継（公開ブローカー14か所）/ PeerJS（WebRTC）
    各プレイヤーは自分の状態だけを毎フレーム送る（マレット・失点・パック）。パックは自陣にあるあいだ
    その側が計算し（自分の打球は遅延ゼロ）、センターラインを越えたら状態ごと相手に渡す。
    自分のマレットが触れた瞬間にも計算役を引き取る。座標はホストの向きで送り、ゲストは180°回して使う。
@@ -2849,7 +2936,6 @@ const MQTT_BROKERS=[
   {name:'Mosquitto',url:'wss://test.mosquitto.org:8081/mqtt'},
   {name:'Mosquitto(認証)',url:'wss://test.mosquitto.org:8091/mqtt',user:'rw',pass:'readwrite'},
   {name:'Eclipse',url:'wss://mqtt.eclipseprojects.io:443/mqtt'},
-  {name:'Eclipse(2)',url:'wss://mqtt.eclipse.org:443/mqtt'},
   {name:'shiftr.io',url:'wss://public.cloud.shiftr.io:443',user:'public',pass:'public'},
   {name:'FreeMQTT',url:'wss://broker.freemqtt.com:8084/mqtt',user:'freemqtt',pass:'public'},
   {name:'FreeMQTT(2)',url:'wss://mqtt.freemqtt.com:8084/mqtt',user:'freemqtt',pass:'public'},
@@ -2863,22 +2949,33 @@ function mqVarLen(n){const out=[];do{let b=n%128;n=Math.floor(n/128);if(n>0)b|=1
 function mqStr(s){const b=_te.encode(s);return [b.length>>8,b.length&255,...b]}
 function mqPacket(type,body){const vl=mqVarLen(body.length),u=new Uint8Array(1+vl.length+body.length);u[0]=type;u.set(vl,1);u.set(body,1+vl.length);return u}
 class MiniMqtt{
-  constructor(cfg,onMsg,onState){this.cfg=cfg;this.onMsg=onMsg;this.onState=onState;this.subs=new Set();this.up=false;this.dead=false;this.buf=new Uint8Array(0);this.pid=1;this.tries=0;this.rtt=0;this.connect()}
+  constructor(cfg,onMsg,onState){this.cfg=cfg;this.onMsg=onMsg;this.onState=onState;this.subs=new Set();this.up=false;this.dead=false;this.buf=new Uint8Array(0);this.pid=1;this.tries=0;this.rtt=0;this.ever=false;this.lastRx=0;this.rt=0;this.ws=null;this.connect()}
   connect(){
-    if(this.dead)return; let ws;
+    if(this.dead||this.ws)return; clearTimeout(this.rt); this.rt=0; let ws;
     try{ws=new WebSocket(this.cfg.url,['mqtt'])}catch(e){this.fail();return}
-    this.ws=ws;ws.binaryType='arraybuffer';
-    const t=setTimeout(()=>{if(!this.up){try{ws.close()}catch(e){}}},7000);
+    this.ws=ws;ws.binaryType='arraybuffer';this.buf=new Uint8Array(0);
+    const t=setTimeout(()=>{if(!this.up&&this.ws===ws){try{ws.close()}catch(e){}this.drop(ws)}},6000);
     ws.onopen=()=>{
       const cid='ah'+Math.random().toString(36).slice(2,12); let flags=0x02; const pay=[...mqStr(cid)];
       if(this.cfg.user){flags|=0x80;pay.push(...mqStr(this.cfg.user))}
       if(this.cfg.pass){flags|=0x40;pay.push(...mqStr(this.cfg.pass))}
       try{ws.send(mqPacket(0x10,Uint8Array.from([...mqStr('MQTT'),4,flags,0,40,...pay])))}catch(e){}
     };
-    ws.onmessage=ev=>{const d=new Uint8Array(ev.data),b=new Uint8Array(this.buf.length+d.length);b.set(this.buf);b.set(d,this.buf.length);this.buf=b;this.parse()};
-    ws.onclose=ws.onerror=()=>{clearTimeout(t);clearInterval(this.ping);if(this.ws!==ws)return;this.ws=null;const was=this.up;this.up=false;if(was)this.onState(this);this.fail()};
+    ws.onmessage=ev=>{if(this.ws!==ws)return;this.lastRx=performance.now();const d=new Uint8Array(ev.data),b=new Uint8Array(this.buf.length+d.length);b.set(this.buf);b.set(d,this.buf.length);this.buf=b;this.parse()};
+    ws.onclose=ws.onerror=()=>{clearTimeout(t);this.drop(ws)};
   }
-  fail(){if(this.dead)return;this.tries++;setTimeout(()=>this.connect(),Math.min(30000,1500*Math.pow(2,Math.min(this.tries,5))))}
+  drop(ws){ // この線を捨てて、少し待ってつなぎ直す
+    if(this.ws!==ws)return; clearInterval(this.ping); this.ws=null; const was=this.up; this.up=false;
+    try{ws.onopen=ws.onmessage=ws.onclose=ws.onerror=null}catch(e){}
+    if(was)this.onState(this); this.fail();
+  }
+  fail(){ // 一度つながったブローカーはすぐ（最大8秒）、一度もつながらないブローカーはゆっくり試す
+    if(this.dead)return; this.tries++; clearTimeout(this.rt);
+    const ms=this.ever?Math.min(8000,700*Math.pow(2,Math.min(this.tries,4))):Math.min(60000,2000*Math.pow(2,Math.min(this.tries,5)));
+    this.rt=setTimeout(()=>{this.rt=0;this.connect()},ms);
+  }
+  kick(){if(this.dead||this.ws)return;if(this.ever||this.tries<3){this.tries=0;this.connect()}} // 画面に戻った・回線が戻ったとき：待たずにつなぐ
+  recycle(){const ws=this.ws;if(!ws)return;this.tries=0;try{ws.close()}catch(e){}this.drop(ws);clearTimeout(this.rt);this.rt=0;this.connect()} // 応答が止まった線（スマホの回線切り替え後など）を張り直す
   parse(){
     for(;;){
       const b=this.buf;if(b.length<2)return;
@@ -2887,14 +2984,14 @@ class MiniMqtt{
       if(b.length<i+len)return;
       const type=b[0]>>4,body=b.subarray(i,i+len),hdr=b[0];
       this.buf=b.slice(i+len);
-      if(type===2){if(body[1]===0){this.up=true;this.tries=0;this.subs.forEach(tp=>this.sendSub(tp));this.ping=setInterval(()=>{try{this.ws.send(Uint8Array.from([0xC0,0]))}catch(e){}},25000);this.onState(this)}else{try{this.ws.close()}catch(e){}}}
+      if(type===2){if(body[1]===0){this.up=true;this.ever=true;this.tries=0;this.subs.forEach(tp=>this.sendSub(tp));clearInterval(this.ping);this.ping=setInterval(()=>{try{this.ws&&this.ws.send(Uint8Array.from([0xC0,0]))}catch(e){}},20000);this.onState(this)}else{try{this.ws.close()}catch(e){}}}
       else if(type===3){const tl=(body[0]<<8)|body[1],topic=_td.decode(body.subarray(2,2+tl));let off=2+tl;if((hdr>>1)&3)off+=2;try{this.onMsg(topic,_td.decode(body.subarray(off)))}catch(e){}}
     }
   }
   sendSub(topic){if(!this.up)return;const id=(this.pid++&0xffff)||1;try{this.ws.send(mqPacket(0x82,Uint8Array.from([id>>8,id&255,...mqStr(topic),0])))}catch(e){}}
   sub(topic){this.subs.add(topic);this.sendSub(topic)}
-  pub(topic,text){if(!this.up)return false;try{this.ws.send(mqPacket(0x30,Uint8Array.from([...mqStr(topic),..._te.encode(text)])));return true}catch(e){return false}}
-  close(){this.dead=true;clearInterval(this.ping);try{if(this.ws)this.ws.close()}catch(e){}}
+  pub(topic,text){if(!this.up||!this.ws)return false;try{this.ws.send(mqPacket(0x30,Uint8Array.from([...mqStr(topic),..._te.encode(text)])));return true}catch(e){return false}}
+  close(){this.dead=true;clearInterval(this.ping);clearTimeout(this.rt);try{if(this.ws)this.ws.close()}catch(e){}}
 }
 /* ---- ブローカー群：全部につなぎ、全部で聞き、速い2か所から送る ---- */
 const LOBBY_T='linkah/v1/lobby';
@@ -2906,7 +3003,7 @@ function pool(){
     const c=new MiniMqtt(cfg,(tp,tx)=>poolMsg(c,tp,tx),()=>{if(c.up)c.pub(POOL.echo,String(performance.now()));else c.rtt=0;poolStatus()});
     c.sub(POOL.echo); POOL.handlers.forEach((_,tp)=>c.sub(tp)); return c;
   });
-  setInterval(()=>{POOL.clients.forEach(c=>{if(c.up)c.pub(POOL.echo,String(performance.now()))});poolStatus()},3000);
+  setInterval(()=>{const now=performance.now();POOL.clients.forEach(c=>{if(c.up){if(now-c.lastRx>11000)c.recycle();else c.pub(POOL.echo,String(now))}});poolStatus()},3000);
   poolStatus(); return POOL;
 }
 function poolMsg(c,tp,tx){
@@ -2915,6 +3012,12 @@ function poolMsg(c,tp,tx){
 }
 function poolSub(tp,fn){POOL.handlers.set(tp,fn);if(POOL.clients)POOL.clients.forEach(c=>c.sub(tp))}
 function poolUnsub(tp){POOL.handlers.delete(tp);if(POOL.clients)POOL.clients.forEach(c=>c.subs.delete(tp))}
+function poolKick(){ // 画面に戻ったとき：切れた線はすぐつなぎ、つながっているはずの線は返事を確かめる（2.5秒返事がなければ張り直す）
+  if(!POOL.clients) return; const t0=performance.now();
+  POOL.clients.forEach(c=>{if(!c.ws)c.kick();else if(c.up)c.pub(POOL.echo,String(t0))});
+  setTimeout(()=>POOL.clients.forEach(c=>{if(c.up&&c.lastRx<t0)c.recycle()}),2500);
+}
+function poolPubAll(tp,text){if(!POOL.clients)return 0;let k=0;POOL.clients.forEach(c=>{if(c.pub(tp,text))k++});return k}
 function poolPub(tp,text,n){
   if(!POOL.clients) return; const now=performance.now();
   if(now-POOL.orderT>1000){POOL.orderT=now;POOL.order=POOL.clients.filter(c=>c.up).sort((a,b)=>(a.rtt||9e3)-(b.rtt||9e3))}
@@ -2937,13 +3040,36 @@ function tagMesh(api,code){let ls=0;return{kind:'room',label:'CLAUDE.AI',
   close(){api.presence({gs:null,s:null}).catch(()=>{})}}}
 function seenStates(seen){const now=performance.now(),out=[];seen.forEach((v,k)=>{if(now-v.at>5000)seen.delete(k);else out.push(v.s)});return out}
 function relayMesh(code){
-  const P=pool(); const topic='linkah/v1/r/'+code, seen=new Map(); let lastSend=0;
-  const M={kind:'relay',label:'MQTT',
-    publish(s){const now=performance.now();if(now-lastSend<33)return;lastSend=now;poolPub(topic,JSON.stringify(s),2)},
-    states(){return seenStates(seen)}, close(){poolUnsub(topic)}};
-  poolSub(topic,tx=>{let m;try{m=JSON.parse(tx)}catch(e){return}if(!m||typeof m.id!=='string'||m.id===NET.id)return;const o=seen.get(m.id);if(o&&num(m.q)<=num(o.s.q))return;seen.set(m.id,{s:m,at:performance.now()});netArrive(m)});
-  return new Promise((res,rej)=>{const t0=performance.now();const chk=setInterval(()=>{if(poolUp()>0){clearInterval(chk);res(M)}else if(performance.now()-t0>12000){clearInterval(chk);poolUnsub(topic);rej(new Error('no broker'))}},200)});
+  // 以前は「自分にとって速い2か所」だけに送っていたため、相手がそのブローカーにつながれない回線（学校・会社の Wi-Fi、
+  // 一部のスマホ回線）だと、ほかに共通のブローカーがいくつあっても一切届かなかった。
+  // いまは各自が「つながっているブローカーと往復時間」(bk) を知らせ、相手ごとに両方がつながっている中で
+  // 往復の合計が短い2か所へ送る。相手がまだわからないときは、つながっている全部へ送る。
+  const P=pool(); const topic='linkah/v1/r/'+code, seen=new Map(), bks=new Map(); let lastSend=0,lastAll=0,lastBk=0;
+  const myBk=()=>{const o=[];P.clients.forEach((c,i)=>{if(c.up)o.push(i,Math.round(c.rtt||500))});return o};
+  const M={kind:'relay',label:'MQTT',slow:false,
+    publish(s){
+      const now=performance.now(); if(now-lastSend<(M.slow?200:33))return; lastSend=now; // 直接(P2P)で届いているあいだは控えめに（予備の道として残す）
+      const tg=new Set(); let unk=!seen.size;
+      seen.forEach((v,id)=>{if(now-v.at>5000)return;const b=bks.get(id),best=[];
+        if(b)P.clients.forEach((c,i)=>{if(c.up&&b.has(i))best.push([(c.rtt||500)+b.get(i),i])});
+        if(!best.length){unk=true;return} best.sort((x,y)=>x[0]-y[0]); tg.add(best[0][1]); if(best[1])tg.add(best[1][1])});
+      const all=now-lastAll>=(unk?250:1000);
+      let tx=JSON.stringify(s); if(all||now-lastBk>=1000){lastBk=now;tx=tx.slice(0,-1)+',"bk":'+JSON.stringify(myBk())+'}'}
+      if(all){lastAll=now;P.clients.forEach(c=>c.pub(topic,tx));return}
+      tg.forEach(i=>P.clients[i].pub(topic,tx));
+    },
+    states(){return seenStates(seen)}, at(id){const v=seen.get(id);return v?v.at:0}, close(){poolUnsub(topic)}};
+  poolSub(topic,tx=>{
+    // 同じ便が複数のブローカーから届く：番号(q)が古いものは中身を読まずに捨てる（スマホの負担を減らす）
+    if(tx.startsWith('{"id":"')){const e=tx.indexOf('"',7),qi=tx.indexOf(',"q":');if(e>7&&qi>0){const o=seen.get(tx.slice(7,e));if(o&&parseInt(tx.slice(qi+5,qi+22),10)<=num(o.s.q))return}}
+    let m;try{m=JSON.parse(tx)}catch(e){return}if(!m||typeof m.id!=='string'||m.id===NET.id)return;
+    if(Array.isArray(m.bk)){const b=new Map();for(let i=0;i+1<m.bk.length&&i<64;i+=2){const k=m.bk[i]|0;if(k>=0&&k<P.clients.length)b.set(k,clamp(num(m.bk[i+1],500),1,5000))}bks.set(m.id,b);delete m.bk}
+    const o=seen.get(m.id);if(o&&num(m.q)<=num(o.s.q))return;seen.set(m.id,{s:m,at:performance.now()});netArrive(m)});
+  return new Promise((res,rej)=>{const t0=performance.now();const chk=setInterval(()=>{if(poolUp()>0){clearInterval(chk);res(M)}else if(performance.now()-t0>15000){clearInterval(chk);poolUnsub(topic);rej(new Error('no broker'))}},200)});
 }
+// PeerJS の reliable:false は「順番は守らないが、落ちた便は届くまで送り直す」設定。回線が少し不安定なだけで
+// 送り直しが詰まり、相手の動きが遅れてまとめて届く（ラグ）。状態は毎回まるごと送っているので、落ちた便は捨てる設定にする
+try{const RP=window.RTCPeerConnection&&RTCPeerConnection.prototype,cdc=RP&&RP.createDataChannel;if(cdc&&!RP._ahU){RP._ahU=1;RP.createDataChannel=function(l,c){if(c&&c.ordered===false&&c.maxRetransmits==null&&c.maxPacketLifeTime==null)c=Object.assign({},c,{maxRetransmits:0});return cdc.call(this,l,c)}}}catch(e){}
 let peerLibP=null;
 function loadPeer(){
   if(window.Peer) return Promise.resolve(window.Peer); if(peerLibP) return peerLibP;
@@ -2951,21 +3077,55 @@ function loadPeer(){
     s.onload=()=>window.Peer?res(window.Peer):rej(new Error('peer'));s.onerror=()=>{peerLibP=null;s.remove();rej(new Error('peer load'))};document.head.appendChild(s)});
   return peerLibP;
 }
+let ICE=null;
+async function iceCfg(){ // 直結の道を増やす。学校・会社の Wi-Fi やスマホ回線で直結できないときは中継（TURN）を使う
+  if(ICE) return ICE;
+  const list=[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.cloudflare.com:3478']}];
+  try{if(window.crypto&&crypto.subtle){const user=`${Math.floor(Date.now()/1000)+86400}:ah${NET.id}`,te=new TextEncoder(),k=await crypto.subtle.importKey('raw',te.encode('openrelayprojectsecret'),{name:'HMAC',hash:'SHA-1'},false,['sign']);
+    const sig=new Uint8Array(await crypto.subtle.sign('HMAC',k,te.encode(user)));let b='';sig.forEach(v=>b+=String.fromCharCode(v));
+    list.push({urls:['turn:staticauth.openrelay.metered.ca:80','turn:staticauth.openrelay.metered.ca:443?transport=tcp','turns:staticauth.openrelay.metered.ca:443?transport=tcp'],username:user,credential:btoa(b)})}}catch(e){}
+  list.push({urls:'turn:eu-0.turn.peerjs.com:3478',username:'peerjs',credential:'peerjsp'});
+  ICE={iceServers:list,sdpSemantics:'unified-plan'}; return ICE;
+}
 async function peerMesh(code,host){
-  const Peer=await loadPeer();
+  // 以前は、合図用サーバーとの線が一度切れる（スマホで別のアプリに切り替えた・回線が変わった）と二度とつながらず、
+  // ゲストは最初の9秒でつながらなければ直接の道をあきらめていた。いまは切れても自動でつなぎ直し、
+  // ゲストはホストへの道を1本保ち続ける（止まった道は張り直す）。
+  const Peer=await loadPeer(), cfg=await iceCfg();
+  const pid='linkah-'+code, conns=new Set(), seen=new Map(); let pr=null, closed=false, sup=0, mkT=0, opened=false, lastTry=0;
+  const onData=(c,d)=>{c._rx=performance.now();if(!d||typeof d.id!=='string'||d.id===NET.id)return;const o=seen.get(d.id);if(o&&num(d.q)<=num(o.s.q))return;seen.set(d.id,{s:d,at:performance.now()});netArrive(d);
+    if(host)conns.forEach(x=>{if(x!==c&&x.open){try{x.send(d)}catch(e){}}})};
+  const wire=c=>{c._t0=performance.now();conns.add(c);c.on('data',d=>onData(c,d));
+    c.on('open',()=>{c._rx=performance.now();if(!host&&!closed)setStatus('peer','直接つながりました ✓')});
+    const gone=()=>{if(!conns.has(c))return;conns.delete(c);if(!host&&!closed){setStatus('peer','つなぎ直しています…');setTimeout(()=>ensure(true),400)}};c.on('close',gone);c.on('error',gone)};
+  const ensure=force=>{ // ゲスト：ホストへの道を1本保つ
+    if(closed||host||!pr||pr.destroyed||pr.disconnected||!opened) return; const now=performance.now(); let ok=null,pend=null;
+    conns.forEach(c=>{if(c.open)ok=c;else pend=c});
+    if(ok){if(now-(ok._rx||ok._t0)<4000)return;conns.delete(ok);try{ok.close()}catch(e){}}
+    if(pend){if((!force&&now-pend._t0<7000)||now-pend._t0<2500)return;conns.delete(pend);try{pend.close()}catch(e){}}
+    if(now-lastTry<2500)return; lastTry=now; // 合図用サーバーに負担をかけないよう、試すのは2.5秒に1回まで
+    try{wire(pr.connect(pid,{reliable:false,serialization:'json'}))}catch(e){}
+  };
+  const M={kind:'peer',label:'PEERJS',
+    publish(s){conns.forEach(c=>{if(c.open){try{c.send(s)}catch(e){}}})},
+    states(){return seenStates(seen)}, at(id){const v=seen.get(id);return v?v.at:0},
+    kick(){if(closed||!pr)return;if(pr.disconnected&&!pr.destroyed){try{pr.reconnect()}catch(e){}}ensure(true)},
+    close(){closed=true;clearInterval(sup);try{pr&&pr.destroy()}catch(e){}}};
   return new Promise((res,rej)=>{
-    const pid='linkah-'+code, pr=host?new Peer(pid,{debug:0}):new Peer({debug:0}), conns=new Set(), seen=new Map(); let done=false;
-    const fail=setTimeout(()=>{if(!done){done=true;try{pr.destroy()}catch(e){}rej(new Error('timeout'))}},9000);
-    const onData=(c,d)=>{if(!d||typeof d.id!=='string'||d.id===NET.id)return;const o=seen.get(d.id);if(o&&num(d.q)<=num(o.s.q))return;seen.set(d.id,{s:d,at:performance.now()});netArrive(d);
-      if(host)conns.forEach(x=>{if(x!==c&&x.open){try{x.send(d)}catch(e){}}})};
-    const wire=c=>{conns.add(c);c.on('data',d=>onData(c,d));const gone=()=>conns.delete(c);c.on('close',gone);c.on('error',gone)};
-    const M={kind:'peer',label:'PEERJS',publish(s){conns.forEach(c=>{if(c.open){try{c.send(s)}catch(e){}}})},states(){return seenStates(seen)},close(){try{pr.destroy()}catch(e){}}};
-    pr.on('open',()=>{
-      if(host){done=true;clearTimeout(fail);pr.on('connection',wire);res(M);return}
-      const c=pr.connect(pid,{reliable:false,serialization:'json'});wire(c);
-      c.on('open',()=>{if(!done){done=true;clearTimeout(fail);res(M)}});
-    });
-    pr.on('error',err=>{if(!done){done=true;clearTimeout(fail);try{pr.destroy()}catch(e){}rej(err)}});
+    let done=false; const fin=(ok,e)=>{if(done)return;done=true;clearTimeout(tmo);if(ok)res(M);else{M.close();rej(e)}};
+    const tmo=setTimeout(()=>fin(false,new Error('timeout')),12000);
+    const mk=()=>{mkT=performance.now();
+      const p=host?new Peer(pid,{debug:0,config:cfg}):new Peer({debug:0,config:cfg}); pr=p;
+      p.on('open',()=>{if(pr!==p)return;opened=true;fin(true);if(!host){setStatus('peer','ホストを探しています…');ensure(true)}});
+      if(host)p.on('connection',c=>{if(pr===p&&!closed)wire(c)});
+      p.on('disconnected',()=>{if(pr===p&&!closed)setTimeout(()=>{if(pr===p&&!closed&&p.disconnected&&!p.destroyed){try{p.reconnect()}catch(e){}}},700)});
+      p.on('error',err=>{if(pr!==p)return;const t=err&&err.type;if(!done&&!opened){fin(false,err)}}); // 最初につながらないときだけ失敗にする（あとはつなぎ直しに任せる）
+    };
+    mk();
+    sup=setInterval(()=>{if(closed||!opened)return;const p=pr;
+      if(p.destroyed){if(performance.now()-mkT>5000)mk();return} // 壊れた → 作り直す（ホストは同じ名前で受け付け直す）
+      if(p.disconnected){try{p.reconnect()}catch(e){}return}
+      ensure(false)},2000);
   });
 }
 /* 複数経路を束ねる：同じ人の状態は番号(q)の新しいほうを採用 = 速い経路が勝つ */
@@ -2973,7 +3133,10 @@ function multiMesh(list){
   const via=new Map();
   return{kind:'multi',list,closed:false,
     get label(){const o=NET.oppPeer||NET.hostPeer;return (o&&via.get(o.id))||(list[0]&&list[0].label)||'—'},
-    publish(s){list.forEach(m=>m.publish(s))},
+    publish(s){const rm=list.find(m=>m.kind==='relay'),pm=list.find(m=>m.kind==='peer');
+      if(rm){let ok=false;if(pm){const now=performance.now(),ids=[...NET.peers.keys()];ok=ids.length>0&&ids.every(id=>now-pm.at(id)<450)}rm.slow=ok}
+      list.forEach(m=>m.publish(s))},
+    kick(){list.forEach(m=>{try{m.kick&&m.kick()}catch(e){}})},
     states(){const best=new Map();for(const m of list){for(const s of m.states()){const b=best.get(s.id);if(!b||num(s.q)>num(b.s.q))best.set(s.id,{s,l:m.label})}}
       const out=[];best.forEach((v,k)=>{out.push(v.s);via.set(k,v.l)});return out},
     close(){this.closed=true;list.forEach(m=>m.close())}};
@@ -3004,20 +3167,23 @@ async function openMesh(code,isHost,how){
   const list=[], M=multiMesh(list);
   await new Promise((res,rej)=>{
     let left=kinds.length, ok=false;
+    const good=()=>{if(!ok){ok=true;res()}}, bad=e=>{if(--left===0&&!ok){M.closed=true;rej(e||new Error('none'))}};
     kinds.forEach(k=>{
       setStatus(k,k==='relay'?'ブローカーに接続中…':(isHost?'待ち受け準備中…':'ホストを探しています…'));
-      (k==='relay'?relayMesh(code):peerMesh(code,isHost)).then(m=>{
-        if(M.closed){m.close();return}
-        list.push(m); if(k==='peer') setStatus('peer',isHost?'待ち受け中 ✓':'接続 ✓');
-        if(!ok){ok=true;res()}
-      }).catch(e=>{setStatus(k,e&&e.type==='unavailable-id'?'同じ名前のサーバーあり':'つながらない');if(--left===0&&!ok)rej(e||new Error('none'))});
+      if(k==='relay'){relayMesh(code).then(m=>{if(M.closed){m.close();return}list.push(m);good()}).catch(e=>{setStatus('relay','つながらない');bad(e)});return}
+      let n=0;
+      const tryPeer=()=>peerMesh(code,isHost).then(m=>{if(M.closed){m.close();return}list.push(m);if(isHost)setStatus('peer','待ち受け中 ✓');good()}).catch(e=>{
+        const dup=e&&e.type==='unavailable-id'; setStatus('peer',dup?'同じ名前のサーバーあり':'つながらない（再試行します）');
+        if(n===0)bad(e);
+        if(!dup&&++n<8&&kinds.length>1)setTimeout(()=>{if(!M.closed){setStatus('peer','再試行中…');tryPeer()}},5000)});
+      tryPeer();
     });
   });
   return M;
 }
 const ST_LABEL={room:'claude.ai',relay:'MQTT中継',peer:'PeerJS'};
 function setStatus(k,t){NET.status[k]=t;renderLog()}
-function renderLog(){const t=Object.keys(NET.status).map(k=>`${ST_LABEL[k]||k}：${NET.status[k]}`).join('　');for(const id of ['netLog','netLog2','netLog3'])$(id).textContent=t}
+function renderLog(){const t=Object.keys(NET.status).map(k=>`${ST_LABEL[k]||k}：${NET.status[k]}`).join('　');for(const id of ['netLog','netLog2','netLog3','netLog4'])$(id).textContent=t}
 
 /* ---- ロビー：開いているサーバーの一覧 ---- */
 function startMqLobby(){
@@ -3039,7 +3205,7 @@ function renderServers(){
   const list=listServers(), sig=JSON.stringify(list.map(s=>[s.code,s.nm,s.hn,s.n,s.open,s.st,s.pm,s.pl]))+(NET.apiTried?1:0);
   if(sig===NET.srvSig) return; NET.srvSig=sig;
   const box=$('srvList'); box.textContent='';
-  if(!list.length){const p=document.createElement('p');p.className='empty';p.textContent=NET.apiTried?'いま開いているサーバーはありません。「サーバーを作る」から作れます。':'サーバーを探しています…';box.appendChild(p);return}
+  if(!list.length){const p=document.createElement('p');p.className='empty';p.textContent=!NET.apiTried?'サーバーを探しています…':(!NET.api&&POOL.clients&&!poolUp())?'中継サーバーにつながるのを待っています…（サーバー名がわかっていれば、下に入れて参加できます）':'いま開いているサーバーはありません。相手のサーバー名がわかっていれば、下に入れて参加できます（一覧に出ていなくても直接つながります）。「サーバーを作る」から作れます。';box.appendChild(p);return}
   for(const s of list){
     const b=document.createElement('button');b.type='button';b.className='srv';if(!s.open)b.style.setProperty('--acc','#7d8792');
     const a=document.createElement('span'),nm=document.createElement('b'),sm=document.createElement('small');
@@ -3054,7 +3220,7 @@ function lobbyAnnounce(){
   const srv=NET.mode==='online'&&NET.role==='h'&&NET.srv?{nm:NET.srv.name,code:NET.srv.code,hn:myName(),n:1+NET.peers.size,open:cls?(NET.hostG.opp?0:1):(hum<capOf(pc)?1:0),st:NET.hostG.st,pm:[pc.m,pc.n,pc.map],cap:capOf(pc),pl:Math.min(hum,capOf(pc))}:null;
   const sig=JSON.stringify(srv);
   if(NET.api&&sig!==NET.lastAnn){NET.lastAnn=sig;NET.api.presence({app:'ah2',srv}).catch(()=>{})}
-  if(srv&&NET.mesh&&NET.mesh.kind==='multi'&&POOL.clients) poolPub(LOBBY_T,sig,3);
+  if(srv&&NET.mesh&&NET.mesh.kind==='multi'&&POOL.clients) poolPubAll(LOBBY_T,sig); // 速い3か所だけだと、相手がそこにつながれないと一覧に出なかった
 }
 setInterval(lobbyAnnounce,2000);
 
@@ -3279,6 +3445,7 @@ function netTick(dt){
     r.seen=now; if(s.q!==r.q){netArrive(s,now);const ar=NET.arr.get(s.id);r.q=s.q;r.s=s;r.rx=ar&&ar.q===num(s.q)?ar.at:now;r.fresh=true} // 届いた瞬間の時刻を使う（フレーム単位に丸めない）
   }
   NET.peers.forEach((r,k)=>{if(!present.has(k)&&now-r.seen>1500)NET.peers.delete(k)});
+  {let iv=DEV.and?16:10;NET.peers.forEach(r=>{const v=r.s?num(r.s.iv):0;if(v>iv&&v<=50)iv=v});NET.rxIv=iv}
   if(NET.role==='h') hostTick(now); else guestTick(now);
   if(!NET.mesh) return;
   consumeStates(now);
@@ -3348,8 +3515,8 @@ function youNow(now){ // 送る瞬間の自分のマレット（次の描画を�
   return [you.x+dx,you.y+dy];
 }
 function publishTick(now){
-  if(now-NET.pubT<(PT.on?PT.sendIv-1:9)) return; NET.pubT=now;
-  const S={id:NET.id,n:myName(),r:NET.role,q:++NET.seq,t:Math.round(now)};
+  const iv=Math.max(PT.on?PT.sendIv:10,NET.rxIv||10); if(now-NET.pubT<iv-1) return; NET.pubT=now;
+  const S={id:NET.id,n:myName(),r:NET.role,q:++NET.seq,t:Math.round(now),iv:DEV.and?16:10};
   if(NET.role==='h'){const H=NET.hostG;S.g={gid:H.gid,st:H.st,opp:H.opp,win:WIN,pc:PT.on?PT.cfg:cleanCfg(PCFG)};S.sv=NET.srv?NET.srv.name:'';if(!PT.on)S.g.lr=lobbyRoster(PCFG,false)}
   else if(PT.req===0||PT.req===1) S.tm=PT.req;
   if(PT.on){paFill(S,now)}
@@ -3908,8 +4075,8 @@ function paStatic(cnv,prev){
     if(th.lane){g.strokeStyle='rgba(255,255,255,.12)';g.lineWidth=.008*F;g.setLineDash([.06*F,.06*F]);for(let k=-3;k<=3;k++){const p=v2.add(A.C,v2.mul(A.goals[0].t,k*.22*F));g.beginPath();g.moveTo(p[0]-A.goals[0].n[0]*3,p[1]-A.goals[0].n[1]*3);g.lineTo(p[0]+A.goals[0].n[0]*3,p[1]+A.goals[0].n[1]*3);g.stroke()}g.setLineDash([])}
     if(th.hazard){for(const gl of A.goals){g.save();g.translate(gl.c[0],gl.c[1]);g.rotate(Math.atan2(gl.t[1],gl.t[0]));for(let k=-12;k<12;k++){g.fillStyle=k&1?'rgba(244,197,52,.2)':'rgba(20,20,20,.12)';g.beginPath();g.moveTo(k*.05*F,.0);g.lineTo(k*.05*F+.05*F,0);g.lineTo(k*.05*F+.02*F,.05*F);g.lineTo(k*.05*F-.03*F,.05*F);g.fill()}g.restore()}}
   }
-  // ラインと各サイドの陣地
-  const lw=.009*F; g.lineWidth=lw;
+  // ラインと各サイドの陣地（最高画質は線を光らせる）
+  const lw=.009*F; g.lineWidth=lw; if(GQ.ultra&&!prev){g.shadowColor=hexA(th.line,.9);g.shadowBlur=9*dpr}
   if(A.tri){g.strokeStyle=hexA(th.line,.75);g.setLineDash([.03*F,.025*F]);for(const gl of A.goals){const th_=Math.atan2(-gl.n[1],-gl.n[0])+Math.PI/3;g.beginPath();g.moveTo(A.C[0],A.C[1]);g.lineTo(A.C[0]+Math.cos(th_)*3,A.C[1]+Math.sin(th_)*3);g.stroke()}g.setLineDash([])}
   else{g.strokeStyle=hexA(th.line,.85);g.beginPath();g.moveTo(A.C[0]-A.Wd,A.C[1]);g.lineTo(A.C[0]+A.Wd,A.C[1]);g.stroke()}
   g.strokeStyle=hexA(th.line,.85); g.beginPath(); g.arc(A.C[0],A.C[1],.17*F,0,TAU); g.stroke();
@@ -3920,7 +4087,7 @@ function paStatic(cnv,prev){
     if(A.crease){const c=A.crease[gl.side];g.fillStyle=hexA(col,.16);g.beginPath();g.moveTo(c.x,c.y);g.arc(c.x,c.y,c.r,ang-Math.PI/2,ang+Math.PI/2);g.closePath();g.fill();g.setLineDash([.02*F,.015*F]);g.strokeStyle=hexA(col,.9);g.beginPath();g.arc(c.x,c.y,c.r,ang-Math.PI/2,ang+Math.PI/2);g.stroke();g.setLineDash([])}}
   if(A.movers.length&&!A.tri){g.strokeStyle=hexA(th.line,.35);g.setLineDash([.02*F,.02*F]);g.lineWidth=lw*.8;for(const o of A.movers){const a=o.f(0),b=o.f(Math.PI/2/A.map.ob.mover.w),c2=o.f(-Math.PI/2/A.map.ob.mover.w);g.beginPath();g.moveTo(c2[0],c2[1]);g.lineTo(b[0],b[1]);g.stroke()}g.setLineDash([])}
   if(A.movers.length&&A.tri){g.strokeStyle=hexA(th.line,.35);g.setLineDash([.02*F,.02*F]);g.lineWidth=lw*.8;g.beginPath();g.arc(A.C[0],A.C[1],A.map.ob.mover.tri[0][0]*A.R,0,TAU);g.stroke();g.setLineDash([])}
-  g.restore();
+  g.shadowBlur=0; g.restore();
   // ゴール口（レールの切り欠き）
   for(const gl of A.goals){const col=SIDEC[gl.side].c,o=v2.mul(gl.n,-PV.rw*1.05);
     g.fillStyle=th.goal; g.beginPath(); g.moveTo(...gl.a); g.lineTo(...gl.b); g.lineTo(...v2.add(gl.b,o)); g.lineTo(...v2.add(gl.a,o)); g.closePath(); g.fill();
@@ -3981,15 +4148,19 @@ function partyRender(dt,now){
   if(GQ.trail&&k>0&&tr.length>=4){g.lineCap='round';g.strokeStyle=A.th.dark?'#9fb4ff':'#2b3038';const n=tr.length/2;for(let i=1;i<n;i++){const f=i/n;g.globalAlpha=.22*f*k;g.lineWidth=2*A.pr*(.35+.6*f);g.beginPath();g.moveTo(tr[2*i-2],tr[2*i-1]);g.lineTo(tr[2*i],tr[2*i+1]);g.stroke()}g.globalAlpha=1}
   // 当たりのリングと火花
   for(let i=rings.length-1;i>=0;i--){const r=rings[i];r.t+=dt;const p=r.t/r.life;if(p>=1){rings.splice(i,1);continue}const e=1-(1-p)*(1-p);g.globalAlpha=(1-p)*(.35+.5*r.s);g.strokeStyle=r.c;g.lineWidth=(.008*(1-p)+.002)*F;g.beginPath();g.arc(r.x,r.y,(.012+e*(.05+.07*r.s))*F,0,TAU);g.stroke()}
-  g.strokeStyle='#f6b23a'; g.lineCap='round';
+  g.strokeStyle='#f6b23a'; g.lineCap='round'; if(GQ.ultra){g.shadowColor='#ffb44a';g.shadowBlur=8*dpr}
   for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];s.t+=dt;if(s.t>=s.life){sparks.splice(i,1);continue}const f=Math.exp(-6*dt);s.vx*=f;s.vy*=f;s.x+=s.vx*dt*F;s.y+=s.vy*dt*F;g.globalAlpha=1-s.t/s.life;g.lineWidth=.0045*F;g.beginPath();g.moveTo(s.x,s.y);g.lineTo(s.x-s.vx*.014*F,s.y-s.vy*.014*F);g.stroke()}
-  g.globalAlpha=1;
-  // 影
-  if(!lo){g.fillStyle='rgba(10,20,35,.22)';for(const m of PT.ms){g.beginPath();g.arc(m.x+.012*F,m.y+.018*F,A.mr*1.02,0,TAU);g.fill()}g.beginPath();g.arc(puck.x+.006*F,puck.y+.01*F,A.pr,0,TAU);g.fill()}
+  g.globalAlpha=1; g.shadowBlur=0;
+  // 影（最高画質はふちのぼけた影）
+  if(GQ.ultra){const sh_=(x,y,r)=>{const gr=g.createRadialGradient(x,y,r*.3,x,y,r*1.5);gr.addColorStop(0,'rgba(8,14,26,.38)');gr.addColorStop(1,'rgba(8,14,26,0)');g.fillStyle=gr;g.beginPath();g.arc(x,y,r*1.5,0,TAU);g.fill()};for(const m of PT.ms)sh_(m.x+.014*F,m.y+.022*F,A.mr);sh_(puck.x+.008*F,puck.y+.012*F,A.pr)}
+  else if(!lo){g.fillStyle='rgba(10,20,35,.22)';for(const m of PT.ms){g.beginPath();g.arc(m.x+.012*F,m.y+.018*F,A.mr*1.02,0,TAU);g.fill()}g.beginPath();g.arc(puck.x+.006*F,puck.y+.01*F,A.pr,0,TAU);g.fill()}
+  if(GQ.ultra) paUltraLights(g,A,now,sp);
   // ここから画面の向き（回さない絵）
   g.setTransform(dpr,0,0,dpr,jx*dpr,jy*dpr);
   const ps=paSprite('puck'+(lo?'f':''),A.pr,lo?((q,r)=>{q.fillStyle='#1b1f25';circ(q,0,0,r);q.fill();q.lineWidth=r*.16;q.strokeStyle=COL.gold;circ(q,0,0,r*.6);q.stroke()}):drawPuck);
-  const P=toS(puck.x,puck.y); g.save(); g.translate(P[0],P[1]); g.rotate(puck.a+PV.rot); g.drawImage(ps.c,-ps.h,-ps.h,ps.h*2,ps.h*2); g.restore();
+  const P=toS(puck.x,puck.y);
+  if(GQ.ultra&&sp>2.5){const Q=toS(puck.x-puck.vx*.06,puck.y-puck.vy*.06);for(let k=5;k>=1;k--){const f=k/6;g.globalAlpha=.28*(1-f);g.drawImage(ps.c,P[0]+(Q[0]-P[0])*f-ps.h,P[1]+(Q[1]-P[1])*f-ps.h,ps.h*2,ps.h*2)}g.globalAlpha=1} // 残像
+  g.save(); g.translate(P[0],P[1]); g.rotate(puck.a+PV.rot); g.drawImage(ps.c,-ps.h,-ps.h,ps.h*2,ps.h*2); g.restore();
   g.font=`800 ${clamp(PV.S*.05*F,10,13)}px "Zen Kaku Gothic New",sans-serif`; g.textAlign='center'; g.textBaseline='bottom';
   for(const m of PT.ms){
     const sk=paSkin(m), s=paSprite('m'+skinArr(sk).join('|')+(lo?'f':''),A.mr,(q,r)=>lo?flatMallet(q,r,patMeta(sk.pat).dark?'#23272e':sk.body,patMeta(sk.pat).dark?sk.body:shade(sk.knob,-.25)):drawMalletSkin(q,r,sk)), Q=toS(m.x,m.y), R=A.mr*PV.S;
@@ -4016,6 +4187,19 @@ function paHud(on){
 }
 function partyAim(cx,cy){if(!rect||!rect.width)rect=stage.getBoundingClientRect();const p=fromS(cx-rect.left,cy-rect.top);target.x=p[0];target.y=p[1]}
 function partyKey(dx,dy){if(PT.me<0)return;const m=PT.ms[PT.me],k=.09*PT.A.F,c=Math.cos(-PV.rot),s=Math.sin(-PV.rot);target.x=m.x+(dx*c-dy*s)*k;target.y=m.y+(dx*s+dy*c)*k}
+
+function paUltraLights(g,A,now,sp){ // 最高画質：床を流れる照明の反射・パックとマレットの光・空気中のほこり
+  const F=A.F, bb=paBBox(A);
+  g.save(); polyPath(g,A.poly); g.clip(); g.globalCompositeOperation='lighter';
+  const t=(now/5200)%1, x=bb[0]+(bb[2]-bb[0]+1.2*F)*t-.6*F, gr=g.createLinearGradient(x-.5*F,bb[1],x+.5*F,bb[3]);
+  gr.addColorStop(0,'rgba(255,255,255,0)');gr.addColorStop(.5,A.th.dark?'rgba(140,170,255,.08)':'rgba(255,255,255,.12)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(bb[0],bb[1],bb[2]-bb[0],bb[3]-bb[1]);
+  const pl=.1+.25*Math.min(1,sp/8), pg=g.createRadialGradient(puck.x,puck.y,0,puck.x,puck.y,A.pr*7);pg.addColorStop(0,`rgba(255,226,150,${pl})`);pg.addColorStop(1,'rgba(255,226,150,0)');g.fillStyle=pg;g.beginPath();g.arc(puck.x,puck.y,A.pr*7,0,TAU);g.fill();
+  for(const m of PT.ms){const c=SIDEC[m.side].c,mg=g.createRadialGradient(m.x,m.y,A.mr*.6,m.x,m.y,A.mr*2.8);mg.addColorStop(0,hexA(c,.22));mg.addColorStop(1,hexA(c,0));g.fillStyle=mg;g.beginPath();g.arc(m.x,m.y,A.mr*2.8,0,TAU);g.fill()}
+  if(!PT.motes){const R=prng(77);PT.motes=[];for(let i=0;i<90;i++)PT.motes.push({x:bb[0]+R()*(bb[2]-bb[0]),y:bb[1]+R()*(bb[3]-bb[1]),vx:(R()-.5)*.03,vy:(R()-.5)*.03,s:R()})}
+  for(const o of PT.motes){o.x+=o.vx*.016*F;o.y+=o.vy*.016*F;if(o.x<bb[0])o.x=bb[2];if(o.x>bb[2])o.x=bb[0];if(o.y<bb[1])o.y=bb[3];if(o.y>bb[3])o.y=bb[1];
+    g.fillStyle=`rgba(255,248,230,${.12+.25*o.s*(.6+.4*Math.sin(now/700+o.s*9))})`;g.beginPath();g.arc(o.x,o.y,(.002+.004*o.s)*F,0,TAU);g.fill()}
+  g.restore();
+}
 
 /* ---- 待機室・表示 ---- */
 let waitSig='';
@@ -4066,9 +4250,9 @@ function setCap(){
 function envNote(){
   $('envNote').textContent=NET.api
     ?'このページを開いている人と遊べます。友だちを呼ぶときは、右上の共有からこのページを共有してください。「自動」では claude.ai ルームを使います。'
-    :'「自動」では MQTT中継（公開ブローカー15か所に同時接続）と PeerJS（WebRTC）を同時に試し、速いほうで通信します。サーバー名を伝えれば別の端末からも参加できます。';
+    :'「自動」では PeerJS（WebRTC で直接つなぐ・いちばん速い）と MQTT中継（公開ブローカー14か所に同時接続・予備の道）を同時に使い、速いほうで通信します。直接の道が切れても自動でつなぎ直します。サーバー名を伝えれば別の端末からも参加できます。';
 }
-const METHODS=[['auto','自動','使える方法を自動で選ぶ'],['room','claude.ai ルーム','このページを開いている人どうし'],['p2p','MQTT＋PeerJS','15ブローカーとWebRTCを同時に試す'],['relay','MQTT中継のみ','公開ブローカー15か所'],['peer','PeerJSのみ','WebRTCで直接つなぐ']];
+const METHODS=[['auto','自動','使える方法を自動で選ぶ'],['room','claude.ai ルーム','このページを開いている人どうし'],['p2p','MQTT＋PeerJS','14ブローカーとWebRTCを同時に使う'],['relay','MQTT中継のみ','公開ブローカー14か所（遅くなりやすい）'],['peer','PeerJSのみ','WebRTCで直接つなぐ']];
 function renderNet(){
   const box=$('netOpts'); box.textContent='';
   for(const [v,t,d] of METHODS){
@@ -4332,14 +4516,14 @@ $('skinReset').onclick=()=>{skin=Object.assign({},SKIN_DEF);sfx.ui('leave');load
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{sfx.init();sfx.resume();go(b.dataset.go)}));
 document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',back));
 /* ---- 設定：音量（効果音・音楽）とグラフィック ---- */
-const GFX_NAME={hi:'高',mid:'中',lo:'低'};
+const GFX_NAME={ultra:'最高',hi:'高',mid:'中',lo:'低'};
 const fx2=v=>'×'+(+v.toFixed(2)), onoff=v=>v?'ON':'OFF';
-const GFX_ROWS=[['ゲーム画面',{hi:'実物そっくりの3D',mid:'2D',lo:'2D単色'}],['シェーダー（動く光・反射）',{hi:'ON',mid:'OFF',lo:'OFF'}],['衝撃波の歪み・残像ブラー',{hi:'ON',mid:'OFF',lo:'OFF'}],['ゲーム中の光のにじみ',{hi:'ON',mid:'OFF',lo:'OFF'}],['3D確定演出',{hi:'フル',mid:'標準',lo:'軽量'}],['3Dの光のにじみ',{hi:'ON',mid:'ON',lo:'OFF'}],['被写界深度ボケ',q=>onoff(q.bokeh)],
-  ['色調・粒子・色ずれ',{hi:'ON',mid:'ON',lo:'OFF'}],['火花・紙吹雪',{hi:'60%',mid:'35%',lo:'15%'}],['画面の揺れ',{hi:'弱',mid:'わずか',lo:'OFF'}],['ほこり・会場の灯り',q=>onoff(q.dust)],['画面切り替えの動き',{hi:'軽め',mid:'フェードのみ',lo:'フェードのみ'}],['盤面・レールの作り込み',{hi:'細部まで',mid:'標準',lo:'単色'}],['影',q=>q.shadow>1?'2灯·高精細':q.shadow?(q.shadowRes<1024?'1灯·軽量':'1灯'):'OFF'],
-  ['描画解像度',q=>fx2(q.real?q.pr3:q.cv2)],['描くコマ数',q=>q.real&&q.cap3?'60fps':'画面に合わせる'],['残像・背景ぼかし',{hi:'ON',mid:'ON',lo:'OFF'}]];
+const GFX_ROWS=[['ゲーム画面',{hi:'実物そっくりの3D',mid:'2D',lo:'2D単色'}],['シェーダー（動く光・反射）',{hi:'ON',mid:'OFF',lo:'OFF'}],['衝撃波の歪み・残像ブラー',{hi:'ON',mid:'OFF',lo:'OFF'}],['ゲーム中の光のにじみ',{hi:'ON',mid:'OFF',lo:'OFF'}],['確定演出',{ultra:'3D・最高',hi:'3D・フル',mid:DEV.and?'2D（軽量）':'3D・標準',lo:DEV.and?'2D（軽量）':'3D・軽量'}],['3Dの光のにじみ',{hi:'ON',mid:'ON',lo:'OFF'}],['被写界深度ボケ',q=>onoff(q.bokeh)],
+  ['色調・粒子・色ずれ',{hi:'ON',mid:'ON',lo:'OFF'}],['火花・紙吹雪',{ultra:'100%',hi:'60%',mid:'35%',lo:'15%'}],['画面の揺れ',{hi:'弱',mid:'わずか',lo:'OFF'}],['ほこり・会場の灯り',q=>onoff(q.dust)],['画面切り替えの動き',{hi:'軽め',mid:'フェードのみ',lo:'フェードのみ'}],['盤面・レールの作り込み',{hi:'細部まで',mid:'標準',lo:'単色'}],['床への映り込み',q=>onoff(q.refl)],['SSAO（物が接する所の陰）',q=>onoff(q.ssao)],['MSAA（ギザギザ消し）',q=>onoff(q.msaa)],['パックの残像',q=>onoff(q.ghost)],['影',q=>q.shadow>1?(q.shadowRes>=4096?'2灯·4K':'2灯·高精細'):q.shadow?(q.shadowRes<1024?'1灯·軽量':'1灯'):'OFF'],
+  ['描画解像度',q=>fx2(q.real?q.pr3:q.cv2)],['描くコマ数',q=>DEV.and?'60fps固定':q.real&&q.cap3?'60fps':'画面に合わせる'],['残像・背景ぼかし',{hi:'ON',mid:'ON',lo:'OFF'}]];
 function cfgLabel(){document.querySelectorAll('[data-cfg]').forEach(s=>s.textContent=`SETTINGS · 音量・画質 ${GFX_NAME[gfx]}`)}
-function renderGfxList(){const ul=$('gfxList'),q=gqFor(gfx);ul.textContent='';for(const [n,v] of GFX_ROWS){const a=document.createElement('span'),b=document.createElement('b'),t=typeof v==='function'?v(q):v[gfx];a.textContent=n;b.textContent=t;b.className=t==='OFF'?'off':'';ul.append(a,b)}
-  const rec=TIER_GFX[DEV.tier];$('gfxRec').textContent=`グラフィック · この端末のおすすめは「${GFX_NAME[rec]}」`+(DEV.short?`（${DEV.short}）`:'');const sw=$('autoGfx');sw.setAttribute('aria-checked',String(autoGfx));ul.classList.remove('flash');void ul.offsetWidth;ul.classList.add('flash')}
+function renderGfxList(){const ul=$('gfxList'),q=gqFor(gfx);ul.textContent='';for(const [n,v] of GFX_ROWS){const a=document.createElement('span'),b=document.createElement('b'),t=typeof v==='function'?v(q):(v[gfx]!=null?v[gfx]:v.hi);a.textContent=n;b.textContent=t;b.className=t==='OFF'?'off':'';ul.append(a,b)}
+  const rec=DEV.and?'lo':TIER_GFX[DEV.tier];$('gfxRec').textContent=`グラフィック · この端末のおすすめは「${GFX_NAME[rec]}」`+(DEV.short?`（${DEV.short}）`:'')+(gfx==='ultra'?' · 最高は場面を2回描くとても重い設定です（高性能な端末向け）':'');const sw=$('autoGfx');sw.setAttribute('aria-checked',String(autoGfx));ul.classList.remove('flash');void ul.offsetWidth;ul.classList.add('flash')}
 function volSync(){for(const [id,v] of [['sfxVol',sfxVol],['musVol',musVol]]){const el=$(id),pc=(v*100)+'%';el.querySelector('.vfill').style.width=pc;el.querySelector('.vthumb').style.left=pc;el.setAttribute('aria-valuenow',Math.round(v*100));$(id+'Txt').textContent=Math.round(v*100);el.parentNode.classList.toggle('mute',v<.005)}}
 let volPrevT=0;
 let prefT=0; const savePrefsSoon=()=>{clearTimeout(prefT);prefT=setTimeout(savePrefs,300)};
@@ -4401,9 +4585,13 @@ let hoverEl=null;
 document.addEventListener('pointerover',e=>{if(e.pointerType!=='mouse')return;const b=e.target.closest&&e.target.closest('.item,.cta,.srv,.pat,.opt,.backb,.lvt,.mym,.segi button,.icon');if(b&&b!==hoverEl){hoverEl=b;sfx.ui('hover')}else if(!b)hoverEl=null});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const b=document.activeElement;if(b&&b.tagName==='BUTTON')sfx.ui('press')}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(NET.mode!=='online')pause()}else{last=performance.now();simLast=last}});
-window.addEventListener('pagehide',()=>{try{NET.mesh&&NET.mesh.close()}catch(e){}});
+window.addEventListener('pagehide',e=>{if(e&&e.persisted)return;try{NET.mesh&&NET.mesh.close()}catch(err){}});
+function netKick(){try{poolKick()}catch(e){}try{const M=NET.mesh;if(M&&M.kick)M.kick()}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)netKick()});
+window.addEventListener('online',netKick); window.addEventListener('focus',netKick); window.addEventListener('pageshow',netKick);
 getApi();
-setTimeout(loadThree,1200);
+const want3D=()=>!(DEV.and&&gfx!=='hi'&&gfx!=='ultra');
+setTimeout(()=>{if(want3D())loadThree()},1200);
 
 /* ===== ループ ===== */
 let last=performance.now();
@@ -4430,12 +4618,13 @@ function simAdvance(now,force){
   const n=Math.min(30,Math.max(1,Math.ceil(el*120-1e-6))), h=el/n;
   for(let i=0;i<n;i++) tick(h);
 }
-setInterval(()=>{if(!document.hidden){try{simAdvance(performance.now())}catch(e){console.error(e)}}},4);
-let lastDraw=0, rafE=16.7, ftE=1/60;
+setInterval(()=>{if(!document.hidden&&!(DEV.and&&performance.now()-last<40)){try{simAdvance(performance.now())}catch(e){console.error(e)}}},DEV.and?20:4);
+let lastDraw=0, rafE=16.7, ftE=1/60, nextDraw=0;
 function loop(now){
   const rf=now-last; last=now; if(rf>0&&rf<500) rafE+=(rf-rafE)*.05;
   try{
     simAdvance(performance.now(),true);
+    if(DEV.and&&rafE<15){if(now<nextDraw-3){requestAnimationFrame(loop);return}nextDraw=Math.max(nextDraw+1000/60,now+1000/60-6)} // Android：画面が120Hz・90Hzでも描くのは60回/秒
     // 120Hz などの画面で 3D を毎回描くと、重い端末ではコマ落ちが不規則になって発熱もする。3D は 60fps の一定間隔で描く
     if(GQ.cap3&&rafE<10.5&&(R3.on||(cine.on&&cine.three))&&now-lastDraw<1000/GQ.cap3*.75){requestAnimationFrame(loop);return}
     const raw=(now-lastDraw)/1000; lastDraw=now; let dt=raw; if(dt>1/30)dt=1/30; if(dt<=0)dt=1/240;
