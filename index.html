@@ -140,6 +140,13 @@ canvas{display:block}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .note{font-size:.84rem;line-height:1.75;color:var(--muted);margin:0;max-width:40ch}
 .note.err{color:#ff9c84}
+.ver{font:600 .68rem var(--body);color:var(--dim);margin:8px 0 0;letter-spacing:.04em}
+.ntbtn{justify-self:start;align-self:flex-start;margin-top:2px;padding:9px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:#fff;font:700 .8rem var(--body);cursor:pointer;display:inline-flex;gap:8px;align-items:baseline}.ntbtn small{font-size:.62rem;letter-spacing:.14em;color:var(--dim)}.ntbtn:active{transform:scale(.97)}
+.ntest{display:grid;gap:5px;margin:2px 0 0;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
+.ntest .nt{display:flex;justify-content:space-between;gap:10px;font:600 .74rem var(--body);line-height:1.45}
+.ntest .nt span{color:#c3cad3}.ntest .nt b{font-weight:700;color:#c3cad3;text-align:right}
+.ntest .nt b.ok{color:#3fbf86}.ntest .nt b.ng{color:#ff6b5a}
+.ntest .sum{font:600 .76rem var(--body);line-height:1.6;color:#fff;margin-top:4px;padding-top:7px;border-top:1px solid rgba(255,255,255,.1)}
 .log{font:600 .7rem var(--body);line-height:1.6;color:var(--dim);margin:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 
 /* iOS 風セグメント：タップでもスライドでも切り替え */
@@ -512,6 +519,7 @@ body.gfx-mid .bump,body.gfx-lo .bump{animation:none}
         <button class="item grey mini st" type="button" data-go="net"><span class="jp">接続方法</span><span class="en" id="netSub">CONNECTION · 自動</span><span class="arr"></span></button>
       </nav>
       <p class="note st" id="onNote" aria-live="polite"></p>
+      <p class="ver st" id="verNote"></p>
     </div>
   </section>
 
@@ -535,6 +543,8 @@ body.gfx-mid .bump,body.gfx-lo .bump{animation:none}
         <div class="inline"><input class="inp" id="joinName" maxlength="20" placeholder="サーバー名" enterkeyhint="go"><button class="cta small blue" type="button" id="joinBtn">参加</button></div></div>
       <p class="note st" id="joinNote" aria-live="polite"></p>
       <p class="log st" id="netLog4"></p>
+      <button class="ntbtn st" type="button" id="ntBtn">接続テスト<small>CHECK</small></button>
+      <div class="ntest st" id="ntest" hidden></div>
     </div>
   </section>
 
@@ -2922,6 +2932,7 @@ function keyMove(){
    その側が計算し（自分の打球は遅延ゼロ）、センターラインを越えたら状態ごと相手に渡す。
    自分のマレットが触れた瞬間にも計算役を引き取る。座標はホストの向きで送り、ゲストは180°回して使う。
    =================================================================== */
+const AH_VER='v20';
 const NET={api:null,apiP:null,apiTried:false,mode:'solo',role:null,id:'u'+Math.random().toString(36).slice(2,11),mesh:null,srv:null,
   peers:new Map(),mb:new Map(),arr:new Map(),seq:0,pubT:0,rtt:0,curGid:-1,epoch:0,own:false,pOut:null,hc:0,lastOppHc:-1,conceded:0,oppC:0,err:[0,0],hidden:false,
   overT:0,overFn:null,isPlayer:false,isPlayerNow:false,hostG:{gid:0,st:'wait',opp:null},hostPeer:null,oppPeer:null,specOpp:null,
@@ -3144,7 +3155,7 @@ function multiMesh(list){
 async function getApi(){
   if(!NET.apiP) NET.apiP=(async()=>{
     try{if(window.claude&&typeof window.claude.use==='function'){const r=await window.claude.use('room');if(r){NET.api=r;try{r.onPeers(()=>{if(cur==='join')renderServers()})}catch(e){}}}}catch(e){}
-    NET.apiTried=true; envNote(); return NET.api;
+    NET.apiTried=true; envNote(); verUi(); return NET.api;
   })();
   return NET.apiP;
 }
@@ -3159,29 +3170,60 @@ async function openMesh(code,isHost,how){
   const api=(how==='auto'||how==='room')?await getApi():null;
   if(how==='room'||(how==='auto'&&api)){
     if(!api){setStatus('room','このページでは使えません');throw new Error('noroom')}
-    setStatus('room','接続中…');
-    try{const r=await api.join('ah-'+code);setStatus('room','接続 ✓');return roomMesh(r)}
-    catch(e){setStatus('room','接続 ✓（ロビー内）');return tagMesh(api,code)}
+    setStatus('room','接続中…'); let rm;
+    try{const r=await api.join('ah-'+code);setStatus('room','接続 ✓');rm=roomMesh(r)}
+    catch(e){setStatus('room','接続 ✓（ロビー内）');rm=tagMesh(api,code)}
+    if(how==='room') return rm;
+    // ブラウザ版（GitHub Pages など）で開いている人ともつながるよう、中継と直接の道も裏で開く（使えない環境では静かにあきらめる）
+    const list=[rm], M=multiMesh(list); addPaths(M,list,code,isHost,['relay','peer'],true); return M;
   }
   const kinds=how==='relay'?['relay']:how==='peer'?['peer']:['relay','peer'];
   const list=[], M=multiMesh(list);
-  await new Promise((res,rej)=>{
-    let left=kinds.length, ok=false;
-    const good=()=>{if(!ok){ok=true;res()}}, bad=e=>{if(--left===0&&!ok){M.closed=true;rej(e||new Error('none'))}};
-    kinds.forEach(k=>{
-      setStatus(k,k==='relay'?'ブローカーに接続中…':(isHost?'待ち受け準備中…':'ホストを探しています…'));
-      if(k==='relay'){relayMesh(code).then(m=>{if(M.closed){m.close();return}list.push(m);good()}).catch(e=>{setStatus('relay','つながらない');bad(e)});return}
-      let n=0;
-      const tryPeer=()=>peerMesh(code,isHost).then(m=>{if(M.closed){m.close();return}list.push(m);if(isHost)setStatus('peer','待ち受け中 ✓');good()}).catch(e=>{
-        const dup=e&&e.type==='unavailable-id'; setStatus('peer',dup?'同じ名前のサーバーあり':'つながらない（再試行します）');
-        if(n===0)bad(e);
-        if(!dup&&++n<8&&kinds.length>1)setTimeout(()=>{if(!M.closed){setStatus('peer','再試行中…');tryPeer()}},5000)});
-      tryPeer();
-    });
-  });
+  await new Promise((res,rej)=>addPaths(M,list,code,isHost,kinds,false,res,rej));
   return M;
 }
+function addPaths(M,list,code,isHost,kinds,quiet,res,rej){
+  let left=kinds.length, ok=false;
+  const good=()=>{if(!ok){ok=true;if(res)res()}}, bad=e=>{if(--left===0&&!ok&&rej){M.closed=true;rej(e||new Error('none'))}};
+  kinds.forEach(k=>{
+    setStatus(k,k==='relay'?'ブローカーに接続中…':(isHost?'待ち受け準備中…':'ホストを探しています…'));
+    if(k==='relay'){relayMesh(code).then(m=>{if(M.closed){m.close();return}list.push(m);good()}).catch(e=>{setStatus('relay','つながらない');bad(e)});return}
+    let n=0;
+    const tryPeer=()=>peerMesh(code,isHost).then(m=>{if(M.closed){m.close();return}list.push(m);if(isHost)setStatus('peer','待ち受け中 ✓');good()}).catch(e=>{
+      const dup=e&&e.type==='unavailable-id'; setStatus('peer',dup?'同じ名前のサーバーあり':'つながらない'+(e&&e.type?`（${e.type}）`:'')+'・再試行します');
+      if(n===0)bad(e);
+      if(!dup&&++n<8&&(kinds.length>1||quiet))setTimeout(()=>{if(!M.closed){setStatus('peer','再試行中…');tryPeer()}},5000)});
+    tryPeer();
+  });
+}
 const ST_LABEL={room:'claude.ai',relay:'MQTT中継',peer:'PeerJS'};
+const envName=()=>NET.api?'Claude の画面（ルーム使用可）':(window.claude?'Claude の画面':'ブラウザ版');
+function verUi(){const el=$('verNote');if(el)el.textContent=`${AH_VER} · ${envName()}`}
+/* 接続テスト：この端末・この回線で、どの道が使えるかを調べて表示する */
+let ntBusy=false;
+async function netTest(){
+  if(ntBusy)return; ntBusy=true; const box=$('ntest'); box.hidden=false; box.textContent=''; const rows={};
+  const row=(k,label)=>{const d=document.createElement('div');d.className='nt';const a=document.createElement('span');a.textContent=label;const b=document.createElement('b');b.textContent='確認中…';d.append(a,b);box.appendChild(d);rows[k]=b};
+  const set=(k,t,ok)=>{const b=rows[k];b.textContent=t;b.className=ok===true?'ok':ok===false?'ng':''};
+  row('ver','この画面');row('net','インターネット');row('room','Claude のルーム');row('mq','中継サーバー（MQTT）');row('pj','直接つなぐ合図（PeerJS）');row('ice','直接つなぐ道（STUN/TURN）');
+  set('ver',`${AH_VER} · ${envName()}`,true); set('net',navigator.onLine===false?'オフライン':'オンライン',navigator.onLine!==false);
+  await getApi(); set('room',NET.api?'使える':'なし',NET.api?true:null);
+  let mqOk=false,pjOk=false,ice=new Set();
+  const pmq=(async()=>{pool();const t0=performance.now();while(performance.now()-t0<9000&&poolUp()<3)await sleep(300);
+    const up=poolUp(),f=POOL.clients.filter(c=>c.up&&c.rtt).sort((a,b)=>a.rtt-b.rtt)[0];mqOk=up>0;set('mq',up?`${up}/${POOL.clients.length}か所OK${f?`・最速${Math.round(f.rtt)}ms`:''}`:`0/${POOL.clients.length}か所`,mqOk)})();
+  const ppj=(async()=>{try{const P=await loadPeer(),cfg=await iceCfg();await new Promise((res,rej)=>{const p=new P({debug:0,config:cfg});const t=setTimeout(()=>{try{p.destroy()}catch(e){}rej(new Error('時間切れ'))},9000);
+      p.on('open',()=>{clearTimeout(t);try{p.destroy()}catch(e){}res()});p.on('error',e=>{clearTimeout(t);try{p.destroy()}catch(x){}rej(e)})});pjOk=true;set('pj','OK',true)}
+    catch(e){set('pj','つながらない'+(e&&e.type?`（${e.type}）`:e&&e.message?`（${e.message}）`:''),false)}})();
+  const pice=(async()=>{try{const pc=new RTCPeerConnection(await iceCfg());pc.createDataChannel('t');pc.onicecandidate=e=>{const c=e.candidate;if(!c)return;const m=/ typ (\w+)/.exec(c.candidate||'');if(c.type||m)ice.add(c.type||m[1])};
+      await pc.setLocalDescription(await pc.createOffer());await sleep(6000);try{pc.close()}catch(e){}
+      set('ice',ice.has('relay')?'OK（TURN中継も可）':ice.has('srflx')?'OK（TURNは不可）':ice.has('host')?'同じWi-Fi内のみ':'使えない',ice.has('srflx')||ice.has('relay')?true:ice.size?null:false)}catch(e){set('ice','使えない（'+(e&&e.name||'error')+'）',false)}})();
+  await Promise.all([pmq,ppj,pice]);
+  const sum=document.createElement('p');sum.className='sum';
+  sum.textContent=(mqOk||pjOk||NET.api)
+    ?`この端末は通信できます。参加できないときは、①相手も同じ版（${AH_VER}）を開いているか（古い版が残っているときはページを再読み込み）②サーバー名が同じか ③相手がサーバーを作ったままか、を確かめてください。`+(!pjOk?'（直接の道が使えないため、中継経由で少し遅れることがあります）':'')
+    :'この端末・この回線では、対戦用の通信がすべて止められています。学校・会社などの Wi-Fi、スマホのフィルター（あんしんフィルターなど）、節約モード、Claude アプリの中で開いている、などが原因です。モバイルデータや別の Wi-Fi に切り替えるか、Chrome などのブラウザで開き直してください。';
+  box.appendChild(sum); ntBusy=false;
+}
 function setStatus(k,t){NET.status[k]=t;renderLog()}
 function renderLog(){const t=Object.keys(NET.status).map(k=>`${ST_LABEL[k]||k}：${NET.status[k]}`).join('　');for(const id of ['netLog','netLog2','netLog3','netLog4'])$(id).textContent=t}
 
@@ -3212,7 +3254,7 @@ function renderServers(){
     const pc=s.pm?cleanCfg({m:s.pm[0],n:s.pm[1],map:s.pm[2]}):null, party=pc&&!isClassic(pc);
     nm.textContent=s.nm; sm.textContent=party?`${s.hn||'ホスト'}・${modeLabel(pc)}・${MAPS[pc.map].name}・${s.pl||1}/${s.cap||capOf(pc)}人・${s.st==='wait'?'待機中':'対戦中'}`:`${s.hn||'ホスト'}・${s.open?'1/2人':'2/2人'}${s.n>2?`・観戦${s.n-2}`:''}・${s.st==='wait'?'待機中':'対戦中'}`;
     a.append(nm,sm); const go_=document.createElement('span');go_.className='go';go_.textContent=s.open?'JOIN':'WATCH';
-    b.append(a,go_); b.addEventListener('click',()=>{joinServer(s.nm,s.code,s.via==='room'?'room':'p2p')}); box.appendChild(b);
+    b.append(a,go_); b.addEventListener('click',()=>{joinServer(s.nm,s.code,s.via==='room'?'auto':'p2p')}); box.appendChild(b);
   }
 }
 function lobbyAnnounce(){
@@ -3250,17 +3292,18 @@ async function joinServer(raw,code0,how){
     const mesh=await openMesh(code,false,how||method);
     enterOnline(mesh,'g',{name,code}); NET.joinT=performance.now();
     hist.length=0; hist.push('home','online'); go('wait',{noHist:true}); sfx.ui('join');
-  }catch(e){console.warn(e);fail('そのサーバーにつながりませんでした。サーバー名と接続方法を確かめてください。')}
+  }catch(e){console.warn(e);const why=Object.keys(NET.status).map(k=>`${ST_LABEL[k]||k}：${NET.status[k]}`).join('／');
+    fail(`そのサーバーにつながりませんでした${why?`（${why}）`:''}。下の「接続テスト」の結果を見てください。`);if(cur==='join')setTimeout(netTest,200)}
   finally{NET.busy=false}
 }
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function quickMatch(){
   if(NET.busy) return; busy('対戦相手を探しています');
   await getApi();
-  if(method!=='room'&&(!NET.api||method!=='auto')) startMqLobby();
+  if(method!=='room') startMqLobby();
   const t0=performance.now(); let s=null;
   while(performance.now()-t0<(NET.api&&(method==='auto'||method==='room')?900:3200)){s=listServers().find(x=>x.open&&x.st==='wait');if(s)break;await sleep(250)}
-  if(s) joinServer(s.nm,s.code,s.via==='room'?'room':'p2p');
+  if(s) joinServer(s.nm,s.code,s.via==='room'?'auto':'p2p');
   else createServer(`${myName()}の部屋${Math.floor(100+Math.random()*900)}`);
 }
 function enterOnline(mesh,role,srv){
@@ -3463,7 +3506,7 @@ function guestTick(now){
   let hp=null; NET.peers.forEach(r=>{if(r.s&&r.s.r==='h'&&r.s.g&&typeof r.s.g==='object'&&(!hp||r.first<hp.first))hp=r});
   if(!hp){
     const ref=NET.hostSeenT||NET.joinT;
-    if(now-ref>(NET.hostSeenT?6000:13000)) leaveOnline(NET.hostSeenT?'ホストとの接続が切れました。':'サーバーが見つかりませんでした。サーバー名を確かめてください（先にホストが作っている必要があります）。');
+    if(now-ref>(NET.hostSeenT?6000:13000)) leaveOnline(NET.hostSeenT?'ホストとの接続が切れました。':`サーバーが見つかりませんでした。①サーバー名が同じか ②ホストが先に作っているか ③相手も同じ版（${AH_VER}）を開いているか を確かめてください。`);
     return;
   }
   NET.hostSeenT=now; NET.hostPeer=hp;
@@ -4249,7 +4292,7 @@ function setCap(){
 }
 function envNote(){
   $('envNote').textContent=NET.api
-    ?'このページを開いている人と遊べます。友だちを呼ぶときは、右上の共有からこのページを共有してください。「自動」では claude.ai ルームを使います。'
+    ?'このページを開いている人と遊べます。友だちを呼ぶときは、右上の共有からこのページを共有してください。「自動」では claude.ai ルームに加えて、ブラウザ版（GitHub Pages など）の人ともつながる道（PeerJS・MQTT中継）も使います。'
     :'「自動」では PeerJS（WebRTC で直接つなぐ・いちばん速い）と MQTT中継（公開ブローカー14か所に同時接続・予備の道）を同時に使い、速いほうで通信します。直接の道が切れても自動でつなぎ直します。サーバー名を伝えれば別の端末からも参加できます。';
 }
 const METHODS=[['auto','自動','使える方法を自動で選ぶ'],['room','claude.ai ルーム','このページを開いている人どうし'],['p2p','MQTT＋PeerJS','14ブローカーとWebRTCを同時に使う'],['relay','MQTT中継のみ','公開ブローカー14か所（遅くなりやすい）'],['peer','PeerJSのみ','WebRTCで直接つなぐ']];
@@ -4258,7 +4301,7 @@ function renderNet(){
   for(const [v,t,d] of METHODS){
     const b=document.createElement('button');b.type='button';b.className='opt';b.setAttribute('role','radio');b.setAttribute('aria-checked',v===method?'true':'false');
     const dot=document.createElement('span');dot.className='dot';const tx=document.createElement('span');const bb=document.createElement('b');bb.textContent=t;const sm=document.createElement('small');sm.textContent=d;tx.append(bb,sm);b.append(dot,tx);
-    b.addEventListener('click',()=>{method=v;savePrefs();sfx.ui('tick');renderNet();netSub();if(v!=='room'&&(v!=='auto'||(NET.apiTried&&!NET.api)))startMqLobby()});
+    b.addEventListener('click',()=>{method=v;savePrefs();sfx.ui('tick');renderNet();netSub();if(v!=='room')startMqLobby()});
     box.appendChild(b);
   }
 }
@@ -4299,7 +4342,8 @@ function onShow(name){
   if(name==='online'){$('nameIn').value=myNameV;netSub();$('mapSub').textContent='MAP · '+MAPS[PCFG.map].name}
   else if(name==='party'){renderParty()}
   else if(name==='map'){renderMaps()}
-  else if(name==='join'){NET.srvSig='';renderServers();if(method!=='room'&&(!NET.api||method!=='auto'))startMqLobby()}
+  else if(name==='join'){NET.srvSig='';renderServers();if(method!=='room')startMqLobby()}
+  else if(name==='online'){verUi()}
   else if(name==='create'){if(!$('mkName').value)$('mkName').value=`${myName()}の部屋`;const c=cleanCfg(PCFG),el=$('mkMode');el.textContent='';const b=document.createElement('b');b.textContent=`${modeLabel(c)} · ${MAPS[c.map].name}`;el.append('この設定で作ります：',b,'（トリオ・チーム・マップはオンラインの画面で変えられます）')}
   else if(name==='net'){renderNet();envNote()}
   else if(name==='wait'){waitSig='';renderWait()}
@@ -4569,6 +4613,8 @@ $('startBtn').onclick=()=>{sfx.init();sfx.resume();match.type='free';sweep(newMa
 $('nextBtn').onclick=()=>{if(match.lv<15){match.lv++;selLv=match.lv;sweep(newMatch)}};
 $('quickBtn').onclick=()=>{sfx.init();sfx.resume();quickMatch()};
 $('joinBtn').onclick=()=>{sfx.init();sfx.resume();joinServer($('joinName').value)};
+$('ntBtn').onclick=()=>{sfx.init();netTest()};
+verUi();
 $('makeBtn').onclick=()=>{sfx.init();sfx.resume();createServer($('mkName').value)};
 $('joinName').addEventListener('keydown',e=>{if(e.key==='Enter')$('joinBtn').click()});
 $('mkName').addEventListener('keydown',e=>{if(e.key==='Enter')$('makeBtn').click()});
